@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model branches {
+  id                                                  BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name                                                String      @db.VarChar(255)
+  city                                                String      @db.VarChar(255)
+  address                                             String      @db.VarChar(255)
+  phone                                               String      @db.VarChar(255)
+  created_at                                          DateTime?   @db.Timestamp(0)
+  updated_at                                          DateTime?   @db.Timestamp(0)
+  shipments_shipments_origin_branch_idTobranches      shipments[] @relation("shipments_origin_branch_idTobranches")
+  shipments_shipments_destination_branch_idTobranches shipments[] @relation("shipments_destination_branch_idTobranches")
+  users                                               users[]
+}
+
+model customers {
+  id                                         BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name                                       String      @db.VarChar(50)
+  email                                      String      @unique(map: "email") @db.VarChar(255)
+  email_verified_at                          DateTime?   @db.Timestamp(0)
+  password                                   String      @db.VarChar(255)
+  address                                    String?     @db.Text
+  city                                       String?     @db.VarChar(255)
+  phone                                      String?     @db.VarChar(15)
+  photo                                      String?     @db.VarChar(255)
+  created_at                                 DateTime?   @db.Timestamp(0)
+  updated_at                                 DateTime?   @db.Timestamp(0)
+  shipments_shipments_sender_idTocustomers   shipments[] @relation("shipments_sender_idTocustomers")
+  shipments_shipments_receiver_idTocustomers shipments[] @relation("shipments_receiver_idTocustomers")
+}
+
+model payments {
+  id             BigInt                  @id @default(autoincrement()) @db.UnsignedBigInt
+  shipment_id    BigInt                  @db.UnsignedBigInt
+  amount         Decimal                 @db.Decimal(15, 2)
+  payment_method payments_payment_method
+  payment_status payments_payment_status @default(pending)
+  payment_date   DateTime?               @db.Date
+  created_at     DateTime?               @db.Timestamp(0)
+  updated_at     DateTime?               @db.Timestamp(0)
+  shipments      shipments               @relation(fields: [shipment_id], references: [id], onDelete: Cascade, map: "payments_ibfk_1")
+
+  @@index([shipment_id], map: "shipment_id")
+}
+
+model rates {
+  id               BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  origin_city      String      @db.VarChar(255)
+  destination_city String      @db.VarChar(255)
+  price_per_kg     Decimal     @db.Decimal(15, 2)
+  estimated_days   Int
+  created_at       DateTime?   @db.Timestamp(0)
+  updated_at       DateTime?   @db.Timestamp(0)
+  shipments        shipments[]
+}
+
+model shipment_items {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  shipment_id BigInt    @db.UnsignedBigInt
+  item_name   String    @db.VarChar(255)
+  quantity    Int
+  weight      Decimal   @db.Decimal(10, 2)
+  photo       String?   @db.VarChar(255)
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+  shipments   shipments @relation(fields: [shipment_id], references: [id], onDelete: Cascade, map: "shipment_items_ibfk_1")
+
+  @@index([shipment_id], map: "shipment_id")
+}
+
+model shipment_trackings {
+  id          BigInt                    @id @default(autoincrement()) @db.UnsignedBigInt
+  shipment_id BigInt                    @db.UnsignedBigInt
+  location    String                    @db.VarChar(255)
+  description String?                   @db.Text
+  status      shipment_trackings_status
+  tracked_at  DateTime?                 @db.Timestamp(0)
+  created_at  DateTime?                 @db.Timestamp(0)
+  updated_at  DateTime?                 @db.Timestamp(0)
+  shipments   shipments                 @relation(fields: [shipment_id], references: [id], onDelete: Cascade, map: "shipment_trackings_ibfk_1")
+
+  @@index([shipment_id], map: "shipment_id")
+}
+
+model shipments {
+  id                                                 BigInt               @id @default(autoincrement()) @db.UnsignedBigInt
+  tracking_number                                    String               @unique(map: "tracking_number") @db.VarChar(255)
+  sender_id                                          BigInt               @db.UnsignedBigInt
+  receiver_id                                        BigInt               @db.UnsignedBigInt
+  origin_branch_id                                   BigInt               @db.UnsignedBigInt
+  destination_branch_id                              BigInt               @db.UnsignedBigInt
+  courier_id                                         BigInt?              @db.UnsignedBigInt
+  rate_id                                            BigInt?              @db.UnsignedBigInt
+  total_weight                                       Decimal              @db.Decimal(10, 2)
+  total_price                                        Decimal              @db.Decimal(15, 2)
+  status                                             shipments_status     @default(pending)
+  shipment_date                                      DateTime             @db.Date
+  photo                                              String?              @db.VarChar(255)
+  created_at                                         DateTime?            @db.Timestamp(0)
+  updated_at                                         DateTime?            @db.Timestamp(0)
+  payments                                           payments[]
+  shipment_items                                     shipment_items[]
+  shipment_trackings                                 shipment_trackings[]
+  customers_shipments_sender_idTocustomers           customers            @relation("shipments_sender_idTocustomers", fields: [sender_id], references: [id], onDelete: Cascade, map: "shipments_ibfk_1")
+  customers_shipments_receiver_idTocustomers         customers            @relation("shipments_receiver_idTocustomers", fields: [receiver_id], references: [id], onDelete: Cascade, map: "shipments_ibfk_2")
+  branches_shipments_origin_branch_idTobranches      branches             @relation("shipments_origin_branch_idTobranches", fields: [origin_branch_id], references: [id], onDelete: Cascade, map: "shipments_ibfk_3")
+  branches_shipments_destination_branch_idTobranches branches             @relation("shipments_destination_branch_idTobranches", fields: [destination_branch_id], references: [id], onDelete: Cascade, map: "shipments_ibfk_4")
+  users                                              users?               @relation(fields: [courier_id], references: [id], map: "shipments_ibfk_5")
+  rates                                              rates?               @relation(fields: [rate_id], references: [id], map: "shipments_ibfk_6")
+
+  @@index([courier_id], map: "courier_id")
+  @@index([destination_branch_id], map: "destination_branch_id")
+  @@index([origin_branch_id], map: "origin_branch_id")
+  @@index([rate_id], map: "rate_id")
+  @@index([receiver_id], map: "receiver_id")
+  @@index([sender_id], map: "sender_id")
+}
+
+model users {
+  id                BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name              String      @db.VarChar(255)
+  email             String      @unique(map: "email") @db.VarChar(255)
+  email_verified_at DateTime?   @db.Timestamp(0)
+  password          String      @db.VarChar(255)
+  role              users_role
+  branch_id         BigInt?     @db.UnsignedBigInt
+  remember_token    String?     @db.VarChar(100)
+  created_at        DateTime?   @db.Timestamp(0)
+  updated_at        DateTime?   @db.Timestamp(0)
+  shipments         shipments[]
+  branches          branches?   @relation(fields: [branch_id], references: [id], map: "users_ibfk_1")
+  vehicles          vehicles[]
+
+  @@index([branch_id], map: "branch_id")
+}
+
+model vehicles {
+  id           BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  plate_number String        @db.VarChar(255)
+  type         vehicles_type
+  courier_id   BigInt?       @db.UnsignedBigInt
+  created_at   DateTime?     @db.Timestamp(0)
+  updated_at   DateTime?     @db.Timestamp(0)
+  users        users?        @relation(fields: [courier_id], references: [id], map: "vehicles_ibfk_1")
+
+  @@index([courier_id], map: "courier_id")
+}
+
+enum vehicles_type {
+  motor
+  mobil
+  truck
+}
+
+enum payments_payment_method {
+  cash
+  transfer
+  e_wallet @map("e-wallet")
+}
+
+enum payments_payment_status {
+  pending
+  paid
+  failed
+}
+
+enum shipment_trackings_status {
+  picked_up
+  in_transit
+  arrived_at_branch
+  out_for_delivery
+  delivered
+}
+
+enum users_role {
+  admin
+  cashier
+  courier
+  manager
+}
+
+enum shipments_status {
+  pending
+  picked_up
+  in_transit
+  arrived_at_branch
+  out_for_delivery
+  delivered
+  cancelled
+}
