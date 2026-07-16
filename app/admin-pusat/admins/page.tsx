@@ -282,10 +282,6 @@ export default function AdminPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => {
-                            setSelectedAdmin(admin);
-                            setOpenEdit(true);
-                          }}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors"
                         >
                           <Edit3 size={12} />
@@ -320,16 +316,6 @@ export default function AdminPage() {
 
       {selectedAdmin && (
         <>
-          <EditModal
-            open={openEdit}
-            admin={selectedAdmin}
-            onClose={() => {
-              setOpenEdit(false);
-              setSelectedAdmin(null);
-            }}
-            onSuccess={getAdmins}
-          />
-
           <DeleteModal
             open={openDelete}
             admin={selectedAdmin}
