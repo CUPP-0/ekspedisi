@@ -35,31 +35,36 @@ export default function DeleteModal({
   if (!open || !branch) return null;
 
   async function handleDelete() {
-    setLoading(true);
 
-    try {
-      const res = await fetch(`/api/branches/${branch.id}`, {
-        method: "DELETE",
-      });
+  if (!branch) return;
 
-      const data = await res.json();
+  try {
 
-      if (!res.ok) {
-        alert(data.message);
-        return;
-      }
+    const res = await fetch(`/api/branches/${branch.id}`, {
+      method: "DELETE",
+    });
 
-      alert("Cabang berhasil dihapus");
+    const data = await res.json();
 
-      onSuccess();
-      onClose();
-    } catch (err) {
-      console.log(err);
-      alert("Terjadi kesalahan");
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      alert(data.message);
+      return;
     }
+
+    alert("Cabang berhasil dihapus");
+
+    onSuccess();
+    onClose();
+
+  } catch (err) {
+
+    console.log(err);
+    alert("Terjadi kesalahan");
+
+  }finally {
+    setLoading(false);
   }
+}
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fadeIn">
