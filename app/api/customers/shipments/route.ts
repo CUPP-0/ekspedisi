@@ -4,7 +4,6 @@ import db from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 import path from "path";
 import fs from "fs/promises";
-import { dbPromise } from "@/lib/indexeddb";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
