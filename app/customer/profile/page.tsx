@@ -3,43 +3,22 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  LayoutDashboard,
-  Package,
-  User,
-  Search,
-  LogOut,
-  ArrowLeft,
-  ChevronRight,
-  Bell,
-  Menu,
-  X,
-  MapPin,
-  Phone,
-  Mail,
-  Calendar,
-  Save,
-  Camera,
-  Shield,
-  Award,
-  Star,
-  Edit3,
-  CheckCircle2,
-  Clock,
-  Hash,
-} from 'lucide-react';
+import { LayoutDashboard, Package, User, Search, LogOut, ArrowLeft, ChevronRight, Bell, Menu, X, MapPin, Phone, Mail, Calendar, Save, Camera, Shield, Award, Star, Edit3, CheckCircle2, Clock, Hash } from 'lucide-react';
 
 export default function CustomerProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
 
   const [form, setForm] = useState({
     name: '',
     email: '',
     phone: '',
     address: '',
+    photo: '',
     created_at: '',
   });
 
@@ -62,6 +41,7 @@ export default function CustomerProfilePage() {
         email: data.email || '',
         phone: data.phone || '',
         address: data.address || '',
+        photo: data.photo || '',
         created_at: data.created_at || '',
       });
     } catch (err) {
@@ -76,17 +56,20 @@ export default function CustomerProfilePage() {
     setSaving(true);
 
     try {
+      const formData = new FormData();
+
+      formData.append('name', form.name);
+      formData.append('email', form.email);
+      formData.append('phone', form.phone);
+      formData.append('address', form.address);
+
+      if (photo) {
+        formData.append('photo', photo);
+      }
+
       const res = await fetch('/api/customers/profile', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          address: form.address,
-        }),
+        body: formData,
       });
 
       const data = await res.json();
@@ -97,6 +80,12 @@ export default function CustomerProfilePage() {
       }
 
       alert('Profil berhasil diperbarui.');
+
+      // kalau mau langsung update preview setelah upload
+      setForm((prev) => ({
+        ...prev,
+        photo: data.photo,
+      }));
     } catch (err) {
       console.error(err);
       alert('Terjadi kesalahan. Silakan coba lagi.');
@@ -104,6 +93,8 @@ export default function CustomerProfilePage() {
       setSaving(false);
     }
   }
+
+  const preview = photo ? URL.createObjectURL(photo) : form?.photo ? `/uploads/customers/${form.photo}` : null;
 
   // Menu items
   const menuItems = [
@@ -133,11 +124,7 @@ export default function CustomerProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* ============ SIDEBAR ============ */}
-      <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 z-40 transform transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
+      <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 z-40 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-100">
@@ -156,9 +143,7 @@ export default function CustomerProfilePage() {
 
           {/* Navigation Menu */}
           <nav className="flex-1 px-4 py-6 space-y-1">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">
-              Menu Utama
-            </p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Menu Utama</p>
             {menuItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -166,9 +151,7 @@ export default function CustomerProfilePage() {
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all ${
-                    item.active
-                      ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-200'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    item.active ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
                   <Icon size={20} />
@@ -181,10 +164,7 @@ export default function CustomerProfilePage() {
 
           {/* Logout */}
           <div className="p-4 border-t border-gray-100">
-            <button
-              onClick={() => router.push('/logout')}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all"
-            >
+            <button onClick={() => router.push('/logout')} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all">
               <LogOut size={20} />
               <span className="text-sm">Logout</span>
             </button>
@@ -193,12 +173,7 @@ export default function CustomerProfilePage() {
       </aside>
 
       {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* ============ MAIN CONTENT ============ */}
       <div className="flex-1 min-w-0">
@@ -206,20 +181,13 @@ export default function CustomerProfilePage() {
         <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-gray-200">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4 flex-1">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-              >
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 rounded-lg hover:bg-gray-100">
                 {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
 
               <div className="hidden md:flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5 max-w-md flex-1">
                 <Search size={18} className="text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Cari nomor resi atau nama penerima..."
-                  className="bg-transparent outline-none flex-1 text-sm text-gray-700 placeholder:text-gray-400"
-                />
+                <input type="text" placeholder="Cari nomor resi atau nama penerima..." className="bg-transparent outline-none flex-1 text-sm text-gray-700 placeholder:text-gray-400" />
               </div>
             </div>
 
@@ -230,9 +198,7 @@ export default function CustomerProfilePage() {
               </button>
 
               <div className="hidden md:flex items-center gap-3 pl-3 border-l border-gray-200">
-                <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                  {userInitial}
-                </div>
+                <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">{userInitial}</div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900 leading-tight">{form.name}</p>
                   <p className="text-xs text-gray-500 leading-tight">Customer</p>
@@ -255,10 +221,7 @@ export default function CustomerProfilePage() {
 
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
-            <button
-              onClick={() => router.back()}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
+            <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
               <ArrowLeft size={20} className="text-gray-600" />
             </button>
             <div>
@@ -287,12 +250,25 @@ export default function CustomerProfilePage() {
             <div className="relative flex flex-col md:flex-row items-center gap-6">
               {/* Avatar */}
               <div className="relative">
-                <div className="w-32 h-32 bg-white/20 backdrop-blur-sm border-4 border-white/30 rounded-full flex items-center justify-center text-5xl font-bold shadow-2xl">
-                  {userInitial}
+                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/30 shadow-2xl bg-white/20 backdrop-blur-sm">
+                  {preview ? <img src={preview} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-white">{userInitial}</div>}
                 </div>
-                <button className="absolute bottom-0 right-0 bg-white text-red-600 p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
+
+                <label htmlFor="photo" className="absolute bottom-0 right-0 bg-white text-red-600 p-2 rounded-full shadow-lg cursor-pointer hover:scale-110 transition-transform">
                   <Camera size={18} />
-                </button>
+                </label>
+
+                <input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.length) {
+                      setPhoto(e.target.files[0]);
+                    }
+                  }}
+                />
               </div>
 
               {/* User Info */}
@@ -415,9 +391,7 @@ export default function CustomerProfilePage() {
                     onChange={(e) => setForm({ ...form, address: e.target.value })}
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Alamat ini akan digunakan sebagai alamat default untuk pengiriman
-                  </p>
+                  <p className="text-xs text-gray-500 mt-2">Alamat ini akan digunakan sebagai alamat default untuk pengiriman</p>
                 </div>
               </div>
             </div>
@@ -430,9 +404,7 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-gray-900 mb-2">Keamanan Akun</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Data Anda dilindungi dengan enkripsi end-to-end
-                  </p>
+                  <p className="text-sm text-gray-600 mb-4">Data Anda dilindungi dengan enkripsi end-to-end</p>
 
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg">
@@ -468,11 +440,7 @@ export default function CustomerProfilePage() {
                 )}
               </button>
 
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="sm:w-auto border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-700 hover:text-red-600 px-6 py-4 rounded-xl font-bold transition-all"
-              >
+              <button type="button" onClick={() => router.back()} className="sm:w-auto border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-700 hover:text-red-600 px-6 py-4 rounded-xl font-bold transition-all">
                 Batal
               </button>
             </div>

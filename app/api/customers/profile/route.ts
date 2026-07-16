@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import db from "@/lib/db";
+import { promises as fs } from "fs";
+import path from "path";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
@@ -28,6 +30,7 @@ export async function GET(req: NextRequest) {
         email,
         phone,
         address,
+        photo,
         created_at
       FROM customers
       WHERE id = ?
@@ -69,12 +72,55 @@ export async function PUT(req: NextRequest) {
 
     const { payload }: any = await jwtVerify(token, secret);
 
-    const {
-      name,
-      email,
-      phone,
-      address,
-    } = await req.json();
+    const formData = await req.formData();
+
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
+    const address = formData.get("address") as string;
+
+    const photo = formData.get("photo") as File | null;
+
+    // Ambil foto lama
+    const [rows]: any = await db.query(
+      "SELECT photo FROM customers WHERE id=? LIMIT 1",
+      [payload.id]
+    );
+
+    let photoName = rows[0]?.photo || null;
+
+    if (photo && photo.size > 0) {
+      const uploadDir = path.join(
+        process.cwd(),
+        "public/uploads/customers"
+      );
+
+      await fs.mkdir(uploadDir, {
+        recursive: true,
+      });
+
+      // hapus foto lama
+      if (photoName) {
+        try {
+          await fs.unlink(
+            path.join(uploadDir, photoName)
+          );
+        } catch {}
+      }
+
+      const ext = photo.name.split(".").pop();
+
+      photoName = `${Date.now()}.${ext}`;
+
+      const buffer = Buffer.from(
+        await photo.arrayBuffer()
+      );
+
+      await fs.writeFile(
+        path.join(uploadDir, photoName),
+        buffer
+      );
+    }
 
     await db.query(
       `
@@ -84,6 +130,7 @@ export async function PUT(req: NextRequest) {
         email=?,
         phone=?,
         address=?,
+        photo=?,
         updated_at=NOW()
       WHERE id=?
       `,
@@ -92,6 +139,7 @@ export async function PUT(req: NextRequest) {
         email,
         phone,
         address,
+        photoName,
         payload.id,
       ]
     );
@@ -99,13 +147,18 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Profil berhasil diperbarui.",
+      photo: photoName,
     });
   } catch (error) {
     console.log(error);
 
     return NextResponse.json(
-      { message: "Server Error" },
-      { status: 500 }
+      {
+        message: "Server Error",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

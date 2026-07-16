@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getDB } from "@/lib/indexeddb";
 import Link from 'next/link';
 import {
   LayoutDashboard,
@@ -60,11 +61,26 @@ export default function ShipmentPage() {
 
   async function getData() {
     setLoading(true);
+
     try {
+      // Jika offline
+      if (!navigator.onLine) {
+        const db = await getDB();
+        const cache = await db.get('shipments', 'list');
+
+        if (cache) {
+          setShipments(cache);
+        } else {
+          setShipments([]);
+        }
+
+        return;
+      }
+
+      // Jika online
       const res = await fetch('/api/customers/shipments');
       const data = await res.json();
 
-      // Normalize data: pastikan numeric fields jadi number
       const normalized = (Array.isArray(data) ? data : []).map((item: any) => ({
         ...item,
         total_weight: parseFloat(item.total_weight) || 0,
@@ -72,6 +88,10 @@ export default function ShipmentPage() {
       }));
 
       setShipments(normalized);
+
+      // Simpan cache terbaru
+      const db = await getDB();
+      await db.put('shipments', normalized, 'list');
     } catch (err) {
       console.error(err);
       setShipments([]);
@@ -93,21 +113,35 @@ export default function ShipmentPage() {
       label: 'Pending',
       dot: 'bg-yellow-500',
     },
-    process: {
+    picked_up: {
       bg: 'bg-blue-100',
       text: 'text-blue-700',
       icon: Truck,
       label: 'Diproses',
       dot: 'bg-blue-500',
     },
-    shipping: {
+    in_transit: {
       bg: 'bg-purple-100',
       text: 'text-purple-700',
       icon: Truck,
       label: 'Dalam Pengiriman',
       dot: 'bg-purple-500',
     },
-    completed: {
+    arrived_at_branch: {
+      bg: 'bg-purple-100',
+      text: 'text-purple-700',
+      icon: Truck,
+      label: 'Dalam Pengiriman',
+      dot: 'bg-purple-500',
+    },
+    out_for_delivery: {
+      bg: 'bg-purple-100',
+      text: 'text-purple-700',
+      icon: Truck,
+      label: 'Dalam Pengiriman',
+      dot: 'bg-purple-500',
+    },
+    delivered: {
       bg: 'bg-green-100',
       text: 'text-green-700',
       icon: CheckCircle2,
@@ -146,9 +180,9 @@ export default function ShipmentPage() {
   const stats = {
     total: shipments.length,
     pending: shipments.filter((s) => s.status === 'pending').length,
-    process: shipments.filter((s) => s.status === 'process').length,
-    shipping: shipments.filter((s) => s.status === 'shipping').length,
-    completed: shipments.filter((s) => s.status === 'completed').length,
+    process: shipments.filter((s) => s.status === 'picked_up').length,
+    shipping: shipments.filter((s) => s.status === 'out_for_delivery').length,
+    completed: shipments.filter((s) => s.status === 'delivered').length,
     totalValue: shipments.reduce((sum, s) => sum + s.total_price, 0),
     totalWeight: shipments.reduce((sum, s) => sum + s.total_weight, 0),
   };
@@ -164,9 +198,9 @@ export default function ShipmentPage() {
   const filterTabs = [
     { key: 'all', label: 'Semua', count: stats.total },
     { key: 'pending', label: 'Pending', count: stats.pending },
-    { key: 'process', label: 'Diproses', count: stats.process },
-    { key: 'shipping', label: 'Dikirim', count: stats.shipping },
-    { key: 'completed', label: 'Selesai', count: stats.completed },
+    { key: 'picked_up', label: 'Diproses', count: stats.process },
+    { key: 'out_for_delivery', label: 'Dikirim', count: stats.shipping },
+    { key: 'delivered', label: 'Selesai', count: stats.completed },
   ];
 
   return (
@@ -212,7 +246,7 @@ export default function ShipmentPage() {
 
           {/* Logout */}
           <div className="p-4 border-t border-gray-100">
-            <button onClick={() => router.push('/logout')} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all">
+            <button onClick={() => router.push('/login/customer')} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all">
               <LogOut size={20} />
               <span className="text-sm">Logout</span>
             </button>

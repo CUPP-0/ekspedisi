@@ -1,28 +1,21 @@
-import Sidebar from "@/components/manager/Sidebar";
-import Navbar from "@/components/manager/Navbar";
+import SidebarManager from "@/components/manager/SidebarManager";
 
-export default function Layout({
-    children,
+export default function ManagerLayout({
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <div className="flex">
+  return (
+    <div className="flex min-h-screen bg-gray-100">
 
-            <Sidebar />
+      <SidebarManager />
 
-            <div className="flex-1 bg-gray-100 min-h-screen">
+      <main className="flex-1 overflow-y-auto p-6">
 
-                <Navbar />
+        {children}
 
-                <main className="p-6">
+      </main>
 
-                    {children}
-
-                </main>
-
-            </div>
-
-        </div>
-    );
+    </div>
+  );
 }

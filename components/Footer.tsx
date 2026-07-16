@@ -27,20 +27,6 @@ export default function Footer() {
               <h2 className="text-3xl lg:text-4xl font-bold mb-3">Dapatkan Info & Promo Terbaru</h2>
               <p className="text-white/90 text-lg">Subscribe newsletter kami untuk mendapatkan update layanan, promo spesial, dan tips pengiriman.</p>
             </div>
-
-            {/* Right: Form */}
-            <div className="bg-white rounded-2xl p-2 shadow-2xl">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center gap-3 px-4 py-3">
-                  <Mail className="text-gray-400" size={20} />
-                  <input type="email" placeholder="Masukkan email Anda..." className="w-full outline-none text-gray-800 placeholder:text-gray-400" />
-                </div>
-                <button className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2">
-                  <span>Subscribe</span>
-                  <Send size={18} />
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -117,23 +103,6 @@ export default function Footer() {
                 <div className="w-1 h-5 bg-red-600 rounded-full" />
                 Layanan
               </h3>
-              <div className="space-y-3">
-                <Link href="/layanan/regular" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Regular
-                </Link>
-                <Link href="/layanan/express" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Express
-                </Link>
-                <Link href="/layanan/cargo" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Cargo
-                </Link>
-                <Link href="/layanan/antar-cabang" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Antar Cabang
-                </Link>
-                <Link href="/cek-ongkir" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Cek Ongkir
-                </Link>
-              </div>
             </div>
 
             {/* Company */}
@@ -142,23 +111,6 @@ export default function Footer() {
                 <div className="w-1 h-5 bg-orange-500 rounded-full" />
                 Perusahaan
               </h3>
-              <div className="space-y-3">
-                <Link href="/tentang-kami" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Tentang Kami
-                </Link>
-                <Link href="/karir" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Karir
-                </Link>
-                <Link href="/blog" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Blog
-                </Link>
-                <Link href="/mitra" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Mitra
-                </Link>
-                <Link href="/kontak" className="block text-gray-400 hover:text-red-400 hover:translate-x-1 transition-all">
-                  Kontak
-                </Link>
-              </div>
             </div>
 
             {/* Contact & Hours */}

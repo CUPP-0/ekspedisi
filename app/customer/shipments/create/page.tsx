@@ -3,31 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  LayoutDashboard,
-  Package,
-  User,
-  Search,
-  LogOut,
-  Plus,
-  Minus,
-  Trash2,
-  MapPin,
-  Truck,
-  DollarSign,
-  Weight,
-  Calendar,
-  ArrowLeft,
-  ChevronRight,
-  Bell,
-  Menu,
-  X,
-  PackagePlus,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Star,
-} from 'lucide-react';
+import { LayoutDashboard, Package, User, Search, LogOut, Plus, Minus, Trash2, MapPin, Truck, DollarSign, Weight, Calendar, ArrowLeft, ChevronRight, Bell, Menu, X, PackagePlus, AlertCircle, CheckCircle2, Clock, Star } from 'lucide-react';
 
 interface Branch {
   id: number;
@@ -71,7 +47,8 @@ export default function CreateShipmentPage() {
     {
       item_name: '',
       quantity: 1,
-      weight: 1,
+      weight: 0,
+      photo: null as File | null,
     },
   ]);
 
@@ -83,9 +60,7 @@ export default function CreateShipmentPage() {
     if (!form.origin_branch_id || !form.destination_branch_id) return;
 
     try {
-      const res = await fetch(
-        `/api/rates/check?origin_branch_id=${form.origin_branch_id}&destination_branch_id=${form.destination_branch_id}`
-      );
+      const res = await fetch(`/api/rates/check?origin_branch_id=${form.origin_branch_id}&destination_branch_id=${form.destination_branch_id}`);
 
       const data = await res.json();
 
@@ -107,11 +82,7 @@ export default function CreateShipmentPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [b, c, r] = await Promise.all([
-        fetch('/api/branches/list').then((r) => r.json()),
-        fetch('/api/customers/list').then((r) => r.json()),
-        fetch('/api/rates/list').then((r) => r.json()),
-      ]);
+      const [b, c, r] = await Promise.all([fetch('/api/branches/list').then((r) => r.json()), fetch('/api/customers/list').then((r) => r.json()), fetch('/api/rates/list').then((r) => r.json())]);
 
       console.log('Branches', b);
       console.log('Customers', c);
@@ -134,6 +105,7 @@ export default function CreateShipmentPage() {
         item_name: '',
         quantity: 1,
         weight: 1,
+        photo: null,
       },
     ]);
   }
@@ -177,20 +149,37 @@ export default function CreateShipmentPage() {
     setSubmitting(true);
 
     try {
+      const formData = new FormData();
+
+      formData.append('receiver_id', String(form.receiver_id));
+      formData.append('origin_branch_id', String(form.origin_branch_id));
+      formData.append('destination_branch_id', String(form.destination_branch_id));
+      formData.append('rate_id', String(rate.id));
+      formData.append('total_weight', String(totalWeight));
+      formData.append('total_price', String(totalPrice));
+
+      // Kirim data item tanpa file
+      formData.append(
+        'items',
+        JSON.stringify(
+          items.map((item) => ({
+            item_name: item.item_name,
+            quantity: item.quantity,
+            weight: item.weight,
+          })),
+        ),
+      );
+
+      // Kirim file tiap item
+      items.forEach((item, index) => {
+        if (item.photo) {
+          formData.append(`photo_${index}`, item.photo);
+        }
+      });
+
       const res = await fetch('/api/customers/shipments', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          receiver_id: form.receiver_id,
-          origin_branch_id: form.origin_branch_id,
-          destination_branch_id: form.destination_branch_id,
-          rate_id: rate.id,
-          items,
-          total_weight: totalWeight,
-          total_price: totalPrice,
-        }),
+        body: formData,
       });
 
       const data = await res.json();
@@ -204,7 +193,7 @@ export default function CreateShipmentPage() {
       router.push(`/customer/payment/${data.shipment_id}`);
     } catch (err) {
       console.error(err);
-      alert('Terjadi kesalahan. Silakan coba lagi.');
+      alert('Terjadi kesalahan.');
     } finally {
       setSubmitting(false);
     }
@@ -236,11 +225,7 @@ export default function CreateShipmentPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* ============ SIDEBAR ============ */}
-      <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 z-40 transform transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
+      <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 z-40 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-100">
@@ -259,9 +244,7 @@ export default function CreateShipmentPage() {
 
           {/* Navigation Menu */}
           <nav className="flex-1 px-4 py-6 space-y-1">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">
-              Menu Utama
-            </p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Menu Utama</p>
             {menuItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -269,9 +252,7 @@ export default function CreateShipmentPage() {
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all ${
-                    item.active
-                      ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-200'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    item.active ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-lg shadow-red-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
                   <Icon size={20} />
@@ -282,20 +263,12 @@ export default function CreateShipmentPage() {
             })}
 
             <div className="pt-4 mt-4 border-t border-gray-100">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">
-                Lainnya
-              </p>
-              <Link
-                href="/tracking"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all"
-              >
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Lainnya</p>
+              <Link href="/tracking" className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all">
                 <Search size={20} />
                 <span className="text-sm">Lacak Paket</span>
               </Link>
-              <Link
-                href="/cek-ongkir"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all"
-              >
+              <Link href="/cek-ongkir" className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all">
                 <MapPin size={20} />
                 <span className="text-sm">Cek Ongkir</span>
               </Link>
@@ -304,10 +277,7 @@ export default function CreateShipmentPage() {
 
           {/* Logout */}
           <div className="p-4 border-t border-gray-100">
-            <button
-              onClick={() => router.push('/logout')}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all"
-            >
+            <button onClick={() => router.push('/logout')} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all">
               <LogOut size={20} />
               <span className="text-sm">Logout</span>
             </button>
@@ -316,12 +286,7 @@ export default function CreateShipmentPage() {
       </aside>
 
       {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* ============ MAIN CONTENT ============ */}
       <div className="flex-1 min-w-0">
@@ -329,20 +294,13 @@ export default function CreateShipmentPage() {
         <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-gray-200">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4 flex-1">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-              >
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 rounded-lg hover:bg-gray-100">
                 {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
 
               <div className="hidden md:flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5 max-w-md flex-1">
                 <Search size={18} className="text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Cari nomor resi atau nama penerima..."
-                  className="bg-transparent outline-none flex-1 text-sm text-gray-700 placeholder:text-gray-400"
-                />
+                <input type="text" placeholder="Cari nomor resi atau nama penerima..." className="bg-transparent outline-none flex-1 text-sm text-gray-700 placeholder:text-gray-400" />
               </div>
             </div>
 
@@ -353,9 +311,7 @@ export default function CreateShipmentPage() {
               </button>
 
               <div className="hidden md:flex items-center gap-3 pl-3 border-l border-gray-200">
-                <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                  C
-                </div>
+                <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">C</div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900 leading-tight">Customer</p>
                   <p className="text-xs text-gray-500 leading-tight">Member</p>
@@ -383,19 +339,12 @@ export default function CreateShipmentPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.back()}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
+              <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
                 <ArrowLeft size={20} className="text-gray-600" />
               </button>
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-                  Buat Pengiriman Baru
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  Isi form di bawah untuk membuat shipment baru
-                </p>
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Buat Pengiriman Baru</h1>
+                <p className="text-sm text-gray-500 mt-1">Isi form di bawah untuk membuat shipment baru</p>
               </div>
             </div>
           </div>
@@ -536,9 +485,7 @@ export default function CreateShipmentPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Harga per Kg</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        Rp {Number(rate.price_per_kg).toLocaleString('id-ID')}
-                      </p>
+                      <p className="text-2xl font-bold text-gray-900">Rp {Number(rate.price_per_kg).toLocaleString('id-ID')}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -560,9 +507,7 @@ export default function CreateShipmentPage() {
                   <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={24} />
                   <div>
                     <h3 className="font-bold text-yellow-900 mb-1">Tarif Tidak Tersedia</h3>
-                    <p className="text-sm text-yellow-800">
-                      Tidak ada tarif pengiriman untuk rute ini. Silakan pilih cabang lain.
-                    </p>
+                    <p className="text-sm text-yellow-800">Tidak ada tarif pengiriman untuk rute ini. Silakan pilih cabang lain.</p>
                   </div>
                 </div>
               </div>
@@ -578,9 +523,7 @@ export default function CreateShipmentPage() {
                     </div>
                     <div>
                       <h2 className="text-lg font-bold text-gray-900">Daftar Barang</h2>
-                      <p className="text-sm text-gray-500">
-                        Tambahkan barang yang akan dikirim ({items.length} item)
-                      </p>
+                      <p className="text-sm text-gray-500">Tambahkan barang yang akan dikirim ({items.length} item)</p>
                     </div>
                   </div>
                 </div>
@@ -588,24 +531,15 @@ export default function CreateShipmentPage() {
 
               <div className="p-6 space-y-4">
                 {items.map((item, index) => (
-                  <div
-                    key={index}
-                    className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-red-200 transition-all"
-                  >
+                  <div key={index} className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-red-200 transition-all">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="bg-gradient-to-br from-red-500 to-orange-500 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                          {index + 1}
-                        </div>
+                        <div className="bg-gradient-to-br from-red-500 to-orange-500 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm">{index + 1}</div>
                         <h3 className="font-bold text-gray-900">Barang {index + 1}</h3>
                       </div>
 
                       {items.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeItem(index)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
-                        >
+                        <button type="button" onClick={() => removeItem(index)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">
                           <Trash2 size={14} />
                           <span>Hapus</span>
                         </button>
@@ -643,9 +577,7 @@ export default function CreateShipmentPage() {
                               onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
                               required
                             />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">
-                              pcs
-                            </span>
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">pcs</span>
                           </div>
                         </div>
 
@@ -663,10 +595,26 @@ export default function CreateShipmentPage() {
                               onChange={(e) => updateItem(index, 'weight', Number(e.target.value))}
                               required
                             />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">
-                              Kg
-                            </span>
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">Kg</span>
                           </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Foto Barang</label>
+
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm file:mr-4 file:px-4 file:py-2 file:border-0 file:rounded-lg file:bg-red-600 file:text-white hover:file:bg-red-700"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] ?? null;
+
+                              const newItems = [...items];
+                              newItems[index].photo = file;
+                              setItems(newItems);
+                            }}
+                          />
+
+                          {item.photo && <img src={URL.createObjectURL(item.photo)} alt="Preview" className="mt-3 w-32 h-32 object-cover rounded-lg border" />}
                         </div>
                       </div>
 
@@ -674,9 +622,7 @@ export default function CreateShipmentPage() {
                       <div className="bg-white rounded-lg p-3 border border-gray-200">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-500">Total Berat Item</span>
-                          <span className="font-bold text-gray-900">
-                            {(item.quantity * item.weight).toFixed(2)} Kg
-                          </span>
+                          <span className="font-bold text-gray-900">{(item.quantity * item.weight).toFixed(2)} Kg</span>
                         </div>
                       </div>
                     </div>
@@ -728,9 +674,7 @@ export default function CreateShipmentPage() {
                         <DollarSign size={18} />
                         <span className="text-sm">Harga per Kg</span>
                       </div>
-                      <span className="text-xl font-bold">
-                        Rp {Number(rate.price_per_kg).toLocaleString('id-ID')}
-                      </span>
+                      <span className="text-xl font-bold">Rp {Number(rate.price_per_kg).toLocaleString('id-ID')}</span>
                     </div>
                   )}
 
@@ -739,9 +683,7 @@ export default function CreateShipmentPage() {
                       <DollarSign size={20} className="text-yellow-300" />
                       <span className="text-base font-semibold">Total Ongkir</span>
                     </div>
-                    <span className="text-3xl font-extrabold text-yellow-300">
-                      Rp {totalPrice.toLocaleString('id-ID')}
-                    </span>
+                    <span className="text-3xl font-extrabold text-yellow-300">Rp {totalPrice.toLocaleString('id-ID')}</span>
                   </div>
                 </div>
 
@@ -763,11 +705,7 @@ export default function CreateShipmentPage() {
                   )}
                 </button>
 
-                {!rate && (
-                  <p className="text-center text-sm text-white/80 mt-3">
-                    Pilih cabang asal dan tujuan untuk melihat tarif
-                  </p>
-                )}
+                {!rate && <p className="text-center text-sm text-white/80 mt-3">Pilih cabang asal dan tujuan untuk melihat tarif</p>}
               </div>
             </div>
           </form>

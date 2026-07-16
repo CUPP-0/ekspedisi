@@ -2,6 +2,9 @@ import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import db from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import path from "path";
+import fs from "fs/promises";
+import { dbPromise } from "@/lib/indexeddb";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
@@ -25,11 +28,11 @@ export async function POST(req: NextRequest) {
   const conn = await db.getConnection();
 
   try {
-    const token = req.cookies.get('token')?.value;
+    const token = req.cookies.get("token")?.value;
 
     if (!token) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { message: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -38,20 +41,29 @@ export async function POST(req: NextRequest) {
 
     const senderId = payload.id;
 
-    const {
-      receiver_id,
-      origin_branch_id,
-      destination_branch_id,
-      rate_id,
-      items,
-      total_weight,
-      total_price,
-    } = await req.json();
+    // ==========================
+    // Ambil FormData
+    // ==========================
+    const formData = await req.formData();
+
+    const receiver_id = Number(formData.get("receiver_id"));
+    const origin_branch_id = Number(formData.get("origin_branch_id"));
+    const destination_branch_id = Number(
+      formData.get("destination_branch_id")
+    );
+    const rate_id = Number(formData.get("rate_id"));
+    const total_weight = Number(formData.get("total_weight"));
+    const total_price = Number(formData.get("total_price"));
+
+    const items = JSON.parse(formData.get("items") as string);
 
     const trackingNumber = generateTrackingNumber();
 
     await conn.beginTransaction();
 
+    // ==========================
+    // Insert Shipment
+    // ==========================
     const [shipment]: any = await conn.query(
       `
       INSERT INTO shipments (
@@ -88,7 +100,33 @@ export async function POST(req: NextRequest) {
       ]
     );
 
-    for (const item of items) {
+    // Folder upload
+    const uploadDir = path.join(process.cwd(), "public/uploads/items");
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    // ==========================
+    // Insert Item
+    // ==========================
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      const photo = formData.get(`photo_${i}`) as File | null;
+
+      let photoName: string | null = null;
+
+      if (photo && photo.size > 0) {
+        const buffer = Buffer.from(await photo.arrayBuffer());
+
+        const ext = photo.name.split(".").pop();
+
+        photoName = `${Date.now()}-${i}.${ext}`;
+
+        await fs.writeFile(
+          path.join(uploadDir, photoName),
+          buffer
+        );
+      }
+
       await conn.query(
         `
         INSERT INTO shipment_items (
@@ -96,13 +134,12 @@ export async function POST(req: NextRequest) {
           item_name,
           quantity,
           weight,
+          photo,
           created_at,
           updated_at
         )
         VALUES (
-          ?,?,?,?,
-          NOW(),
-          NOW()
+          ?,?,?,?,?,NOW(),NOW()
         )
         `,
         [
@@ -110,6 +147,7 @@ export async function POST(req: NextRequest) {
           item.item_name,
           item.quantity,
           item.weight,
+          photoName,
         ]
       );
     }
@@ -121,26 +159,21 @@ export async function POST(req: NextRequest) {
       shipment_id: shipment.insertId,
       tracking_number: trackingNumber,
     });
-
   } catch (error) {
-
     await conn.rollback();
 
     console.error(error);
 
     return NextResponse.json(
       {
-        message: 'Gagal membuat shipment.',
+        message: "Gagal membuat shipment.",
       },
       {
         status: 500,
       }
     );
-
   } finally {
-
     conn.release();
-
   }
 }
 

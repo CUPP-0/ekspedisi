@@ -49,6 +49,8 @@ export async function GET(
       [resi]
     );
 
+    console.log(shipments);
+
     if (!shipments.length) {
       return NextResponse.json(
         {

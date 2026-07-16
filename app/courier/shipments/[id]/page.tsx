@@ -1,14 +1,39 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Package,
+  User,
+  MapPin,
+  Phone,
+  Home,
+  Building2,
+  Truck,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Users,
+  DollarSign,
+  Calendar,
+  Weight,
+  Hash,
+  FileText,
+  Camera,
+  ChevronRight,
+  ArrowLeft,
+  PackagePlus,
+  Image as ImageIcon,
+  X,
+} from "lucide-react";
 
 const nextLabel: Record<string, string> = {
-  assigned: 'Picked Up',
-  picked_up: 'In Transit',
-  in_transit: 'Arrived At Branch',
-  arrived_at_branch: 'Out For Delivery',
-  out_for_delivery: 'Delivered',
+  assigned: "Picked Up",
+  picked_up: "In Transit",
+  in_transit: "Arrived At Branch",
+  arrived_at_branch: "Out For Delivery",
+  out_for_delivery: "Delivered",
 };
 
 export default function CourierShipmentDetailPage() {
@@ -19,8 +44,10 @@ export default function CourierShipmentDetailPage() {
   const [items, setItems] = useState<any[]>([]);
   const [trackings, setTrackings] = useState<any[]>([]);
 
-  const [location, setLocation] = useState('');
-  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState("");
+  const [description, setDescription] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,17 +61,15 @@ export default function CourierShipmentDetailPage() {
       setLoading(true);
 
       const res = await fetch(`/api/courier/shipments/${id}`);
-
       const data = await res.json();
 
       if (!res.ok) {
         alert(data.message);
-        router.push('/courier/shipments');
+        router.push("/courier/shipments");
         return;
       }
 
       setShipment(data.shipment);
-      console.log("Status shipment:", data.shipment.status);
       setItems(data.items || []);
       setTrackings(data.trackings || []);
     } catch (err) {
@@ -54,27 +79,44 @@ export default function CourierShipmentDetailPage() {
     }
   }
 
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function removePhoto() {
+    setPhoto(null);
+    setPhotoPreview(null);
+  }
+
   async function nextProcess() {
     if (!location.trim()) {
-      alert('Lokasi wajib diisi.');
+      alert("Lokasi wajib diisi.");
       return;
     }
 
     setSaving(true);
 
     try {
-      const res = await fetch('/api/courier/tracking', {
-        method: 'POST',
+      const formData = new FormData();
+      formData.append("shipment_id", shipment.id.toString());
+      formData.append("location", location);
+      formData.append("description", description);
 
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      if (photo) {
+        formData.append("photo", photo);
+      }
 
-        body: JSON.stringify({
-          shipment_id: shipment.id,
-          location,
-          description,
-        }),
+      const res = await fetch("/api/courier/tracking", {
+        method: "POST",
+        body: formData,
       });
 
       const data = await res.json();
@@ -86,177 +128,634 @@ export default function CourierShipmentDetailPage() {
 
       alert(data.message);
 
-      setLocation('');
-      setDescription('');
+      setLocation("");
+      setDescription("");
+      setPhoto(null);
+      setPhotoPreview(null);
 
       await loadShipment();
     } catch (err) {
       console.log(err);
-
-      alert('Terjadi kesalahan.');
+      alert("Terjadi kesalahan.");
     } finally {
       setSaving(false);
     }
   }
 
+  // Status config
+  const statusConfig: Record<
+    string,
+    { bg: string; text: string; icon: any; label: string; dot: string; step: number }
+  > = {
+    pending: { bg: "bg-yellow-100", text: "text-yellow-700", icon: Clock, label: "Menunggu Pembayaran", dot: "bg-yellow-500", step: 0 },
+    assigned: { bg: "bg-blue-100", text: "text-blue-700", icon: Users, label: "Kurir Ditugaskan", dot: "bg-blue-500", step: 1 },
+    picked_up: { bg: "bg-indigo-100", text: "text-indigo-700", icon: Package, label: "Paket Diambil", dot: "bg-indigo-500", step: 2 },
+    in_transit: { bg: "bg-purple-100", text: "text-purple-700", icon: Truck, label: "Dalam Perjalanan", dot: "bg-purple-500", step: 3 },
+    arrived_at_branch: { bg: "bg-orange-100", text: "text-orange-700", icon: Building2, label: "Tiba di Cabang", dot: "bg-orange-500", step: 4 },
+    out_for_delivery: { bg: "bg-pink-100", text: "text-pink-700", icon: MapPin, label: "Dalam Pengantaran", dot: "bg-pink-500", step: 5 },
+    delivered: { bg: "bg-green-100", text: "text-green-700", icon: CheckCircle2, label: "Terkirim", dot: "bg-green-500", step: 6 },
+    cancelled: { bg: "bg-red-100", text: "text-red-700", icon: AlertCircle, label: "Dibatalkan", dot: "bg-red-500", step: 0 },
+  };
+
+  const paymentConfig: Record<string, { bg: string; text: string; icon: any; label: string }> = {
+    paid: { bg: "bg-green-100", text: "text-green-700", icon: CheckCircle2, label: "Lunas" },
+    failed: { bg: "bg-red-100", text: "text-red-700", icon: AlertCircle, label: "Gagal" },
+    pending: { bg: "bg-yellow-100", text: "text-yellow-700", icon: Clock, label: "Pending" },
+  };
+
+  // Tracking steps
+  const trackingSteps = [
+    { icon: Users, label: "Ditugaskan", status: "assigned" },
+    { icon: Package, label: "Diambil", status: "picked_up" },
+    { icon: Truck, label: "Perjalanan", status: "in_transit" },
+    { icon: Building2, label: "Tiba Cabang", status: "arrived_at_branch" },
+    { icon: MapPin, label: "Pengantaran", status: "out_for_delivery" },
+    { icon: CheckCircle2, label: "Terkirim", status: "delivered" },
+  ];
+
   if (loading) {
-    return <div className="p-10 text-center">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-red-200 border-t-red-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Memuat detail shipment...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!shipment) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] p-8">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md text-center">
+          <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Shipment Tidak Ditemukan</h2>
+          <p className="text-gray-500 mb-6">Shipment yang Anda cari tidak tersedia.</p>
+          <button
+            onClick={() => router.push("/courier/shipments")}
+            className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+          >
+            Kembali ke Shipments
+          </button>
+        </div>
+      </div>
+    );
   }
 
+  const currentStatus = statusConfig[shipment.status] || statusConfig.pending;
+  const currentPayment = paymentConfig[shipment.payment_status] || paymentConfig.pending;
+  const StatusIcon = currentStatus.icon;
+  const PaymentIcon = currentPayment.icon;
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* Header Shipment */}
+    <div className="space-y-6">
+      {/* ============ BREADCRUMB ============ */}
+      <div className="flex items-center gap-2 text-sm text-gray-500">
+        <Link href="/courier/dashboard" className="hover:text-red-600 transition-colors">
+          Dashboard
+        </Link>
+        <ChevronRight size={14} />
+        <Link href="/courier/shipments" className="hover:text-red-600 transition-colors">
+          Shipments
+        </Link>
+        <ChevronRight size={14} />
+        <span className="text-gray-900 font-semibold">Detail</span>
+      </div>
 
-      <div className="bg-white rounded-xl shadow p-6">
-        <h1 className="text-3xl font-bold">{shipment.tracking_number}</h1>
-
-        <div className="mt-6 grid md:grid-cols-2 gap-6">
+      {/* ============ HEADER ============ */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft size={24} className="text-gray-600" />
+          </button>
           <div>
-            <h2 className="font-semibold mb-3">Pengirim</h2>
-
-            <p>{shipment.sender_name}</p>
-            <p>{shipment.sender_phone}</p>
-            <p>{shipment.sender_address}</p>
-          </div>
-
-          <div>
-            <h2 className="font-semibold mb-3">Penerima</h2>
-
-            <p>{shipment.receiver_name}</p>
-            <p>{shipment.receiver_phone}</p>
-            <p>{shipment.receiver_address}</p>
-          </div>
-        </div>
-
-        <hr className="my-6" />
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <p>
-              <strong>Cabang Asal :</strong> {shipment.origin_branch}
-            </p>
-
-            <p>
-              <strong>Cabang Tujuan :</strong> {shipment.destination_branch}
-            </p>
-
-            <p>
-              <strong>Status :</strong> <span className="capitalize font-semibold">{shipment.status.replaceAll('_', ' ')}</span>
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <p>
-              <strong>Pembayaran :</strong> {shipment.payment_status}
-            </p>
-
-            <p>
-              <strong>Total Berat :</strong> {shipment.total_weight} Kg
-            </p>
-
-            <p>
-              <strong>Total Ongkir :</strong> Rp {Number(shipment.total_price).toLocaleString('id-ID')}
+            <div className="flex items-center gap-3 flex-wrap mb-2">
+              <div className="flex items-center gap-2">
+                <Hash size={18} className="text-red-600" />
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                  {shipment.tracking_number}
+                </h1>
+              </div>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${currentStatus.bg} ${currentStatus.text}`}>
+                <StatusIcon size={14} />
+                {currentStatus.label}
+              </span>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${currentPayment.bg} ${currentPayment.text}`}>
+                <PaymentIcon size={14} />
+                {currentPayment.label}
+              </span>
+            </div>
+            <p className="text-sm text-gray-500">
+              Detail pengiriman dan update status paket
             </p>
           </div>
         </div>
       </div>
 
-      {/* Barang */}
+      {/* ============ PROGRESS TRACKING ============ */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-red-500 to-orange-500 p-2 rounded-lg">
+              <Truck className="text-white" size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Progress Pengiriman</h2>
+              <p className="text-sm text-gray-500">Status terkini paket</p>
+            </div>
+          </div>
+        </div>
 
-      <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-xl font-bold mb-5">Daftar Barang</h2>
+        <div className="p-6">
+          <div className="flex items-center justify-between relative">
+            {/* Progress Line */}
+            <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200 rounded-full">
+              <div
+                className="h-full bg-gradient-to-r from-red-500 to-orange-500 rounded-full transition-all duration-500"
+                style={{ width: `${(currentStatus.step / 6) * 100}%` }}
+              />
+            </div>
 
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left py-3">Nama Barang</th>
+            {/* Steps */}
+            {trackingSteps.map((step, index) => {
+              const Icon = step.icon;
+              const isActive = index < currentStatus.step;
+              const isCurrent = index === currentStatus.step - 1;
 
-              <th className="text-left">Qty</th>
+              return (
+                <div key={index} className="relative flex flex-col items-center z-10 flex-1">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                      isActive
+                        ? "bg-gradient-to-br from-red-500 to-orange-500 text-white shadow-lg"
+                        : "bg-gray-200 text-gray-400"
+                    } ${isCurrent ? "ring-4 ring-red-100" : ""}`}
+                  >
+                    <Icon size={20} />
+                  </div>
+                  <p className={`mt-3 text-xs font-semibold text-center ${isActive ? "text-gray-900" : "text-gray-400"}`}>
+                    {step.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
-              <th className="text-left">Berat</th>
-            </tr>
-          </thead>
+      {/* ============ INFO CARDS ============ */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Sender */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-2 rounded-lg">
+                <User className="text-white" size={20} />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Pengirim</h2>
+            </div>
+          </div>
 
-          <tbody>
-            {items.length === 0 && (
+          <div className="p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
+                <User className="text-green-600" size={16} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Nama</p>
+                <p className="font-semibold text-gray-900">{shipment.sender_name}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
+                <Phone className="text-green-600" size={16} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Telepon</p>
+                <p className="font-semibold text-gray-900">{shipment.sender_phone}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
+                <MapPin className="text-green-600" size={16} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Alamat</p>
+                <p className="font-semibold text-gray-900">{shipment.sender_address}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Receiver */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-lg">
+                <User className="text-white" size={20} />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Penerima</h2>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-purple-50 p-2 rounded-lg flex-shrink-0">
+                <User className="text-purple-600" size={16} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Nama</p>
+                <p className="font-semibold text-gray-900">{shipment.receiver_name}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="bg-purple-50 p-2 rounded-lg flex-shrink-0">
+                <Phone className="text-purple-600" size={16} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Telepon</p>
+                <p className="font-semibold text-gray-900">{shipment.receiver_phone}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="bg-purple-50 p-2 rounded-lg flex-shrink-0">
+                <MapPin className="text-purple-600" size={16} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Alamat</p>
+                <p className="font-semibold text-gray-900">{shipment.receiver_address}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============ ROUTE & SUMMARY ============ */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-orange-500 to-yellow-500 p-2 rounded-lg">
+              <MapPin className="text-white" size={20} />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">Rute & Ringkasan</h2>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Route */}
+            <div>
+              <div className="relative">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="flex flex-col items-center">
+                    <div className="bg-red-500 w-10 h-10 rounded-full flex items-center justify-center text-white">
+                      <MapPin size={20} />
+                    </div>
+                    <div className="w-0.5 h-12 bg-gradient-to-b from-red-300 to-orange-300 mt-2" />
+                  </div>
+                  <div className="flex-1 pt-2">
+                    <p className="text-xs text-gray-500 mb-1">Cabang Asal</p>
+                    <p className="font-bold text-gray-900 text-lg">{shipment.origin_branch}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="bg-orange-500 w-10 h-10 rounded-full flex items-center justify-center text-white">
+                      <Home size={20} />
+                    </div>
+                  </div>
+                  <div className="flex-1 pt-2">
+                    <p className="text-xs text-gray-500 mb-1">Cabang Tujuan</p>
+                    <p className="font-bold text-gray-900 text-lg">{shipment.destination_branch}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-xs text-gray-500 mb-1">Total Berat</p>
+                <p className="font-bold text-gray-900 flex items-center gap-1">
+                  <Weight size={14} className="text-red-600" />
+                  {shipment.total_weight} Kg
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-xs text-gray-500 mb-1">Total Ongkir</p>
+                <p className="font-bold text-red-600 flex items-center gap-1">
+                  <DollarSign size={14} />
+                  Rp {Number(shipment.total_price).toLocaleString("id-ID")}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-xs text-gray-500 mb-1">Status</p>
+                <p className="font-bold text-gray-900 capitalize">
+                  {shipment.status.replaceAll("_", " ")}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-xs text-gray-500 mb-1">Pembayaran</p>
+                <p className="font-bold text-gray-900 capitalize">
+                  {shipment.payment_status}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============ ITEMS TABLE ============ */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-indigo-500 to-blue-500 p-2 rounded-lg">
+              <PackagePlus className="text-white" size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Daftar Barang</h2>
+              <p className="text-sm text-gray-500">{items.length} item dalam pengiriman</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <td colSpan={3} className="py-6 text-center text-gray-500">
-                  Tidak ada barang.
-                </td>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Nama Barang
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Jumlah
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Berat
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Total Berat
+                </th>
               </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {items.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center">
+                    <Package className="mx-auto text-gray-300 mb-3" size={48} />
+                    <p className="text-gray-500 font-medium">Belum ada barang</p>
+                  </td>
+                </tr>
+              ) : (
+                items.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-indigo-50 w-9 h-9 rounded-lg flex items-center justify-center">
+                          <Package size={16} className="text-indigo-600" />
+                        </div>
+                        <span className="font-semibold text-gray-900">{item.item_name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-sm font-semibold">
+                        {item.quantity} pcs
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-sm font-medium text-gray-700">{item.weight} Kg</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="text-sm font-bold text-gray-900">
+                        {(item.quantity * item.weight).toFixed(2)} Kg
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ============ TRACKING TIMELINE ============ */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-lg">
+              <Clock className="text-white" size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Riwayat Tracking</h2>
+              <p className="text-sm text-gray-500">{trackings.length} update status</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {trackings.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="text-gray-400" size={40} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Belum ada tracking</h3>
+              <p className="text-gray-500 text-sm">
+                Update status pertama akan muncul di sini
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {trackings.map((tracking, index) => {
+                const trackStatus = statusConfig[tracking.status] || statusConfig.pending;
+                const TrackIcon = trackStatus.icon;
+                return (
+                  <div key={tracking.id} className="relative flex gap-4">
+                    {/* Timeline */}
+                    <div className="flex flex-col items-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${trackStatus.bg} ${trackStatus.text} shadow-sm`}>
+                        <TrackIcon size={18} />
+                      </div>
+                      {index < trackings.length - 1 && (
+                        <div className="w-0.5 h-full bg-gradient-to-b from-gray-300 to-transparent mt-2 min-h-[40px]" />
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold ${trackStatus.bg} ${trackStatus.text}`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${trackStatus.dot}`} />
+                              {tracking.status.replaceAll("_", " ")}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-gray-900">{tracking.location}</h3>
+                        </div>
+                      </div>
+
+                      {tracking.description && (
+                        <p className="text-sm text-gray-600">{tracking.description}</p>
+                      )}
+
+                      {tracking.tracked_at && (
+                        <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                          <Calendar size={10} />
+                          {new Date(tracking.tracked_at).toLocaleString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ============ UPDATE TRACKING FORM ============ */}
+      {nextLabel[shipment.status] ? (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-red-50 to-orange-50 px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-br from-red-500 to-orange-500 p-2 rounded-lg">
+                <Truck className="text-white" size={20} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Update Status Pengiriman</h2>
+                <p className="text-sm text-gray-500">
+                  Lengkapi lokasi dan keterangan. Status berikutnya: <span className="font-semibold text-red-600">{nextLabel[shipment.status]}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-5">
+            {/* Location */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <MapPin size={16} className="text-red-600" />
+                Lokasi Saat Ini <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all"
+                placeholder="Contoh: Jl. Raya Bogor KM 25, Hub Cirebon"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <FileText size={16} className="text-red-600" />
+                Keterangan
+              </label>
+              <textarea
+                rows={4}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all resize-none"
+                placeholder="Contoh: Kurir sedang menuju alamat penerima, paket dalam kondisi baik..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Photo Upload (only for out_for_delivery) */}
+            {shipment.status === "out_for_delivery" && (
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <Camera size={16} className="text-red-600" />
+                  Foto Bukti Pengiriman <span className="text-red-500">*</span>
+                </label>
+
+                {!photoPreview ? (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <ImageIcon className="text-gray-400 mb-2" size={32} />
+                      <p className="text-sm text-gray-500">
+                        <span className="font-semibold text-red-600">Klik untuk upload</span> atau drag & drop
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">PNG, JPG (MAX. 5MB)</p>
+                    </div>
+                    <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} required />
+                  </label>
+                ) : (
+                  <div className="relative">
+                    <img
+                      src={photoPreview}
+                      alt="Preview"
+                      className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-lg transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
 
-            {items.map((item: any) => (
-              <tr key={item.id} className="border-b">
-                <td className="py-3">{item.item_name}</td>
-
-                <td>{item.quantity}</td>
-
-                <td>{item.weight} Kg</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Timeline Tracking */}
-
-      <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-xl font-bold mb-5">Riwayat Tracking</h2>
-
-        <div className="space-y-5">
-          {trackings.length === 0 && <p className="text-gray-500">Belum ada tracking.</p>}
-
-          {trackings.map((tracking: any) => (
-            <div key={tracking.id} className="border-l-4 border-blue-600 pl-5">
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold capitalize">{tracking.status.replaceAll('_', ' ')}</h3>
-
-                <span className="text-xs text-gray-400">{new Date(tracking.tracked_at).toLocaleString('id-ID')}</span>
-              </div>
-
-              <p className="mt-1 text-gray-600">📍 {tracking.location}</p>
-
-              {tracking.description && <p className="mt-2 text-gray-500">{tracking.description}</p>}
-            </div>
-          ))}
-        </div>
-      </div>
-      {/* Update Tracking */}
-
-      {nextLabel[shipment.status] ? (
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-xl font-bold mb-5">Update Status Pengiriman</h2>
-
-          <p className="text-gray-500 mb-5">Lengkapi lokasi dan keterangan. Status berikutnya akan dipilih otomatis oleh sistem.</p>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block mb-2 font-medium">Lokasi Saat Ini</label>
-
-              <input className="border rounded-lg w-full p-3" placeholder="Contoh: Jl. Raya Bogor KM 25" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
-
-            <div>
-              <label className="block mb-2 font-medium">Keterangan</label>
-
-              <textarea rows={4} className="border rounded-lg w-full p-3" placeholder="Contoh: Kurir sedang menuju alamat penerima..." value={description} onChange={(e) => setDescription(e.target.value)} />
-            </div>
-
-            <button onClick={nextProcess} disabled={saving} className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg transition">
-              {saving ? 'Memproses...' : `Update ke ${nextLabel[shipment.status]}`}
+            {/* Submit Button */}
+            <button
+              onClick={nextProcess}
+              disabled={saving}
+              className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg shadow-red-200 hover:shadow-red-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Memproses...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={20} />
+                  <span>Update ke {nextLabel[shipment.status]}</span>
+                </>
+              )}
             </button>
           </div>
         </div>
       ) : (
-        <div className="bg-green-50 border border-green-300 rounded-xl p-6">
-          <h2 className="text-2xl font-bold text-green-700">✅ Pengiriman Selesai</h2>
+        /* ============ COMPLETED STATE ============ */
+        <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl p-8 text-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+                backgroundSize: "24px 24px",
+              }}
+            />
+          </div>
 
-          <p className="mt-2 text-green-600">Paket telah berhasil diterima oleh penerima. Tidak ada update tracking lagi yang dapat dilakukan.</p>
+          <div className="relative flex items-center gap-4">
+            <div className="bg-white/20 backdrop-blur-sm p-4 rounded-xl">
+              <CheckCircle2 size={48} />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Pengiriman Selesai</h2>
+              <p className="text-white/90">
+                Paket telah berhasil diterima oleh penerima. Tidak ada update tracking lagi yang dapat dilakukan.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

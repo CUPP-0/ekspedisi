@@ -46,7 +46,7 @@ export default function AdminLayout({
       icon: MapPin,
     },
     {
-      title: "Courier Applications",
+      title: "Courier",
       href: "/admin/courier-applications",
       icon: Users,
     },

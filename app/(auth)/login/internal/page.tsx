@@ -3,18 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Package,
-  Mail,
-  Lock,
-  Shield,
-  Users,
-  Truck,
-  ArrowRight,
-  Eye,
-  EyeOff,
-  Building2,
-} from 'lucide-react';
+import { Package, Mail, Lock, Shield, Users, Truck, ArrowRight, Eye, EyeOff, Building2 } from 'lucide-react';
 
 export default function InternalLoginPage() {
   const router = useRouter();
@@ -48,6 +37,10 @@ export default function InternalLoginPage() {
       }
 
       switch (data.role) {
+        case 'admin-pusat':
+          router.push('/admin-pusat/dashboard');
+          break;
+
         case 'manager':
           router.push('/manager/dashboard');
           break;
@@ -58,6 +51,10 @@ export default function InternalLoginPage() {
 
         case 'courier':
           router.push('/courier/dashboard');
+          break;
+
+        case 'cashier':
+          router.push('/cashier');
           break;
 
         default:
@@ -119,10 +116,7 @@ export default function InternalLoginPage() {
               dengan Mudah
             </h2>
 
-            <p className="text-white/90 text-lg leading-relaxed mb-8">
-              Platform terpadu untuk admin, manager, dan kurir dalam mengelola pengiriman, 
-              tracking paket, dan operasional harian.
-            </p>
+            <p className="text-white/90 text-lg leading-relaxed mb-8">Platform terpadu untuk admin, manager, dan kurir dalam mengelola pengiriman, tracking paket, dan operasional harian.</p>
 
             {/* Features */}
             <div className="space-y-4">
@@ -234,11 +228,7 @@ export default function InternalLoginPage() {
                     required
                   />
                   <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
@@ -267,10 +257,7 @@ export default function InternalLoginPage() {
               <div className="text-center pt-4 border-t border-gray-100">
                 <p className="text-sm text-gray-600">
                   Login sebagai customer?{' '}
-                  <Link
-                    href="/login/customer"
-                    className="text-blue-600 font-semibold hover:underline inline-flex items-center gap-1"
-                  >
+                  <Link href="/login/customer" className="text-blue-600 font-semibold hover:underline inline-flex items-center gap-1">
                     Klik di sini
                     <ArrowRight size={14} />
                   </Link>

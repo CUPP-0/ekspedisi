@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import db from "@/lib/db";
+import path from "path";
+import fs from "fs/promises";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
@@ -42,11 +44,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const {
-      shipment_id,
-      location,
-      description,
-    } = await req.json();
+    // =========================
+    // Form Data
+    // =========================
+
+    const formData = await req.formData();
+
+    const shipment_id = Number(formData.get("shipment_id"));
+    const location = formData.get("location") as string;
+    const description =
+      (formData.get("description") as string) || "";
+
+    const photo = formData.get("photo") as File | null;
 
     if (!shipment_id) {
       return NextResponse.json(
@@ -81,7 +90,7 @@ export async function POST(req: NextRequest) {
         courier_id,
         status
       FROM shipments
-      WHERE id = ?
+      WHERE id=?
       LIMIT 1
       `,
       [shipment_id]
@@ -124,6 +133,48 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // =========================
+    // Wajib upload foto ketika delivered
+    // =========================
+
+    if (
+      nextStatus === "delivered" &&
+      (!photo || photo.size === 0)
+    ) {
+      return NextResponse.json(
+        {
+          message: "Foto bukti pengiriman wajib diupload.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    let photoName: string | null = null;
+
+    if (photo && photo.size > 0) {
+      const uploadDir = path.join(
+        process.cwd(),
+        "public/uploads/proofs"
+      );
+
+      await fs.mkdir(uploadDir, {
+        recursive: true,
+      });
+
+      const ext = photo.name.split(".").pop();
+
+      photoName = `${Date.now()}-${shipment_id}.${ext}`;
+
+      const buffer = Buffer.from(await photo.arrayBuffer());
+
+      await fs.writeFile(
+        path.join(uploadDir, photoName),
+        buffer
+      );
+    }
+
     await conn.beginTransaction();
 
     // =========================
@@ -156,7 +207,7 @@ export async function POST(req: NextRequest) {
       [
         shipment_id,
         location,
-        description || "",
+        description,
         nextStatus,
       ]
     );
@@ -165,19 +216,37 @@ export async function POST(req: NextRequest) {
     // Update Shipment
     // =========================
 
-    await conn.query(
-      `
-      UPDATE shipments
-      SET
-        status = ?,
-        updated_at = NOW()
-      WHERE id = ?
-      `,
-      [
-        nextStatus,
-        shipment_id,
-      ]
-    );
+    if (nextStatus === "delivered") {
+      await conn.query(
+        `
+        UPDATE shipments
+        SET
+          status=?,
+          photo=?,
+          updated_at=NOW()
+        WHERE id=?
+        `,
+        [
+          nextStatus,
+          photoName,
+          shipment_id,
+        ]
+      );
+    } else {
+      await conn.query(
+        `
+        UPDATE shipments
+        SET
+          status=?,
+          updated_at=NOW()
+        WHERE id=?
+        `,
+        [
+          nextStatus,
+          shipment_id,
+        ]
+      );
+    }
 
     await conn.commit();
 
