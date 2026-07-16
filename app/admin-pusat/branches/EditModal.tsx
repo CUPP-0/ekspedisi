@@ -1,16 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import {
-  X,
-  Building2,
-  MapPin,
-  FileText,
-  Phone,
-  Save,
-  Edit3,
-  CheckCircle2,
-} from "lucide-react";
+import { useEffect, useState } from 'react';
+import { X, Building2, MapPin, FileText, Phone, Save, Edit3, CheckCircle2 } from 'lucide-react';
 
 interface Branch {
   id: number;
@@ -27,19 +18,14 @@ interface Props {
   onSuccess: () => void;
 }
 
-export default function EditModal({
-  open,
-  branch,
-  onClose,
-  onSuccess,
-}: Props) {
+export default function EditModal({ open, branch, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
-    name: "",
-    city: "",
-    address: "",
-    phone: "",
+    name: '',
+    city: '',
+    address: '',
+    phone: '',
   });
 
   useEffect(() => {
@@ -58,13 +44,15 @@ export default function EditModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!branch) return;
+
     setLoading(true);
 
     try {
       const res = await fetch(`/api/branches/${branch.id}`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(form),
       });
@@ -76,13 +64,13 @@ export default function EditModal({
         return;
       }
 
-      alert("Cabang berhasil diupdate");
+      alert('Cabang berhasil diperbarui');
 
       onSuccess();
       onClose();
     } catch (err) {
       console.log(err);
-      alert("Terjadi kesalahan");
+      alert('Terjadi kesalahan');
     } finally {
       setLoading(false);
     }
@@ -102,10 +90,7 @@ export default function EditModal({
               <p className="text-xs text-gray-500">Perbarui informasi cabang {branch.name}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/50 transition-colors"
-          >
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/50 transition-colors">
             <X size={20} className="text-gray-500" />
           </button>
         </div>
@@ -119,9 +104,7 @@ export default function EditModal({
             </div>
             <div>
               <p className="text-sm font-semibold text-blue-900 mb-0.5">Mengedit Cabang</p>
-              <p className="text-xs text-blue-700">
-                Perubahan akan langsung diterapkan pada data cabang. Pastikan informasi sudah benar sebelum menyimpan.
-              </p>
+              <p className="text-xs text-blue-700">Perubahan akan langsung diterapkan pada data cabang. Pastikan informasi sudah benar sebelum menyimpan.</p>
             </div>
           </div>
 
@@ -142,9 +125,7 @@ export default function EditModal({
               />
               <Building2 size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Nama unik untuk mengidentifikasi cabang
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Nama unik untuk mengidentifikasi cabang</p>
           </div>
 
           {/* City */}
@@ -164,9 +145,7 @@ export default function EditModal({
               />
               <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Kota lokasi cabang beroperasi
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Kota lokasi cabang beroperasi</p>
           </div>
 
           {/* Address */}
@@ -186,9 +165,7 @@ export default function EditModal({
               />
               <FileText size={16} className="absolute left-4 top-3 text-gray-400" />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Alamat lengkap cabang termasuk nomor jalan
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Alamat lengkap cabang termasuk nomor jalan</p>
           </div>
 
           {/* Phone */}
@@ -208,9 +185,7 @@ export default function EditModal({
               />
               <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Nomor telepon yang dapat dihubungi
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Nomor telepon yang dapat dihubungi</p>
           </div>
 
           {/* Preview Card */}
