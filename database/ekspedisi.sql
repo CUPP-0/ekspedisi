@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Waktu pembuatan: 08 Jul 2026 pada 06.37
+-- Waktu pembuatan: 16 Jul 2026 pada 01.37
 -- Versi server: 8.0.30
 -- Versi PHP: 8.3.28
 
@@ -44,7 +44,8 @@ CREATE TABLE `branches` (
 INSERT INTO `branches` (`id`, `name`, `city`, `address`, `phone`, `created_at`, `updated_at`) VALUES
 (1, 'Cirebon hub', 'cirebon', 'Jln siliwangii', '083833944848', '2026-07-02 15:07:39', '2026-07-02 15:10:29'),
 (2, 'Bekasi-Hub-cab1', 'Bekasi', 'Mall Sumarecon', '083833944849', '2026-07-02 23:23:21', '2026-07-02 23:23:21'),
-(3, 'Bandung', 'Bandung', 'Ciamis', '083833944847', '2026-07-03 09:13:45', '2026-07-03 09:13:45');
+(3, 'Bandung', 'Bandung', 'Ciamis', '083833944847', '2026-07-03 09:13:45', '2026-07-03 09:13:45'),
+(4, 'Jakarta Hub', 'Jakarta', 'Jl. Kemayoran lama', '083833944841', '2026-07-15 02:22:01', '2026-07-15 02:22:01');
 
 -- --------------------------------------------------------
 
@@ -100,7 +101,37 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`id`, `name`, `email`, `email_verified_at`, `password`, `address`, `city`, `phone`, `photo`, `created_at`, `updated_at`) VALUES
-(1, 'Nur Yusuf Ferdiansyah', 'yusufftibazma@gmail.com', NULL, '$2b$10$6mkBbC/BtfdevDM4B2l4eeb92BABTTz.LWuNaQma6h4XfP7qRirgi', 'Crebon o=', 'Cirebon', '083833944848', NULL, '2026-07-02 15:51:44', '2026-07-02 15:51:44');
+(1, 'Nur Yusuf Ferdiansyah', 'yusufftibazma@gmail.com', NULL, '$2b$10$6mkBbC/BtfdevDM4B2l4eeb92BABTTz.LWuNaQma6h4XfP7qRirgi', 'Crebon o=', 'Cirebon', '083833944848', '1783912699186.jpeg', '2026-07-02 15:51:44', '2026-07-13 03:18:19'),
+(2, 'Iqbal', 'nuryusufv@gmail.com', NULL, '$2b$10$0f8kJ4C3yTFUvmoDKSjX.e6FEPntCbmCv6YX76s1XgJSDcYFNyirm', 'Lemahabng', 'Cirebon', '083833944848', NULL, '2026-07-09 10:21:06', '2026-07-09 10:21:06'),
+(3, 'Asqalani', 'iqbalasqalani656@gmail.com', NULL, '$2b$10$PLwO7T9MCbmUDodtHlXDK.P93hqMXNi/ufA6zoLeGYTE/dcRnNnBK', 'Bekasi', 'Bekasi', '083833944844', NULL, '2026-07-15 02:58:56', '2026-07-15 02:58:56'),
+(4, 'Sayyid Husein', 'zaysmktibazma@gmail.com', NULL, '$2b$10$r8vS0vBwlFdm341/A2MkIeIqFIdgkfN2IewqMcFftAjoFQ3Xsqwj6', 'Tangerang\n', 'Tangerang', '083833944845', NULL, '2026-07-15 03:18:48', '2026-07-15 03:18:48');
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `customer_verifications`
+--
+
+CREATE TABLE `customer_verifications` (
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `city` varchar(255) DEFAULT NULL,
+  `phone` varchar(30) DEFAULT NULL,
+  `address` text,
+  `otp` varchar(6) NOT NULL,
+  `expired_at` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data untuk tabel `customer_verifications`
+--
+
+INSERT INTO `customer_verifications` (`id`, `name`, `email`, `password`, `city`, `phone`, `address`, `otp`, `expired_at`, `created_at`, `updated_at`) VALUES
+(2, 'Ristina Eka Salsabila', 'nyusufv@gmail.com', '$2b$10$KmvE7btrnM5bUFZ6ZhAQCuxysZgQ3NeiEjpdDxgpYmmwBfgy4siCi', 'Cirebon', '083833944848', 'Lemahabang', '479972', '2026-07-09 17:28:57', '2026-07-09 10:18:57', '2026-07-09 10:18:57');
 
 -- --------------------------------------------------------
 
@@ -132,7 +163,9 @@ INSERT INTO `payments` (`id`, `shipment_id`, `amount`, `snap_token`, `order_id`,
 (48, 34, '20000.00', 'd0872e34-6d57-4f9e-bb6c-737c0edf9230', 'EXP-35-1783447067353', 'A120260707175753c66VtgjYvdID', 'bank_transfer', 'paid', NULL, '2026-07-08', '2026-07-07 17:56:28', '2026-07-07 17:58:07'),
 (49, 35, '30000.00', 'a8bb2bab-0bc2-4e09-a19f-4477c749a316', 'EXP-35-1783447067353', 'A120260707175753c66VtgjYvdID', 'bank_transfer', 'paid', NULL, '2026-07-08', '2026-07-07 17:57:47', '2026-07-07 17:58:07'),
 (50, 36, '40000.00', '9d53c2ce-b7e6-4967-a11a-69a97869f609', 'EXP-36-1783448133175', 'A1202607071815421JUjO54BmZID', 'bank_transfer', 'paid', NULL, '2026-07-08', '2026-07-07 18:15:33', '2026-07-07 18:15:58'),
-(51, 37, '40000.00', '3f986a46-c331-4b98-a0ab-4e0d35b5ca4f', 'EXP-37-1783472390645', 'A120260708005957qqn1kca99SID', 'bank_transfer', 'paid', NULL, '2026-07-08', '2026-07-08 00:59:51', '2026-07-08 01:00:16');
+(51, 37, '40000.00', '3f986a46-c331-4b98-a0ab-4e0d35b5ca4f', 'EXP-37-1783472390645', 'A120260708005957qqn1kca99SID', 'bank_transfer', 'paid', NULL, '2026-07-08', '2026-07-08 00:59:51', '2026-07-08 01:00:16'),
+(52, 38, '10000.00', '751700b6-a0ab-4926-aefd-3122be4b52c2', 'EXP-38-1783550117771', 'A120260708223634d4nU3MDHOVID', 'bank_transfer', 'paid', NULL, '2026-07-09', '2026-07-08 22:35:18', '2026-07-08 22:36:48'),
+(53, 39, '10000.00', '8c654c49-9839-49d6-b301-ccbc7a72c85b', 'EXP-39-1784015597634', 'A120260714075324kh1t512qAIID', 'bank_transfer', 'paid', NULL, '2026-07-14', '2026-07-14 07:53:17', '2026-07-14 07:53:36');
 
 -- --------------------------------------------------------
 
@@ -155,7 +188,8 @@ CREATE TABLE `rates` (
 --
 
 INSERT INTO `rates` (`id`, `origin_city`, `destination_city`, `price_per_kg`, `estimated_days`, `created_at`, `updated_at`) VALUES
-(1, 'cirebon', 'Bekasi', '10000.00', 3, '2026-07-02 23:24:25', '2026-07-02 23:24:25');
+(1, 'cirebon', 'Bekasi', '10000.00', 3, '2026-07-02 23:24:25', '2026-07-02 23:24:25'),
+(2, 'Bandung', 'cirebon', '5000.00', 3, '2026-07-15 02:01:08', '2026-07-15 02:01:08');
 
 -- --------------------------------------------------------
 
@@ -188,9 +222,11 @@ CREATE TABLE `shipments` (
 INSERT INTO `shipments` (`id`, `tracking_number`, `sender_id`, `receiver_id`, `origin_branch_id`, `destination_branch_id`, `courier_id`, `rate_id`, `total_weight`, `total_price`, `status`, `shipment_date`, `photo`, `created_at`, `updated_at`) VALUES
 (33, 'EXP260708005348', 1, 1, 1, 2, NULL, 1, '1.00', '10000.00', 'pending', '2026-07-08', NULL, '2026-07-07 17:53:48', '2026-07-07 17:53:48'),
 (34, 'EXP260708005624', 1, 1, 1, 2, NULL, 1, '2.00', '20000.00', 'pending', '2026-07-08', NULL, '2026-07-07 17:56:24', '2026-07-07 17:56:24'),
-(35, 'EXP260708005742', 1, 1, 1, 2, 5, 1, '3.00', '30000.00', 'in_transit', '2026-07-08', NULL, '2026-07-07 17:57:42', '2026-07-07 18:13:28'),
+(35, 'EXP260708005742', 1, 1, 1, 2, 5, 1, '3.00', '30000.00', 'delivered', '2026-07-08', '1783581766395-35.webp', '2026-07-07 17:57:42', '2026-07-09 07:22:46'),
 (36, 'EXP260708011529', 1, 1, 1, 2, NULL, 1, '4.00', '40000.00', 'pending', '2026-07-08', NULL, '2026-07-07 18:15:29', '2026-07-07 18:15:29'),
-(37, 'EXP260708075941', 1, 1, 1, 2, NULL, 1, '4.00', '40000.00', 'pending', '2026-07-08', NULL, '2026-07-08 00:59:41', '2026-07-08 00:59:41');
+(37, 'EXP260708075941', 1, 1, 1, 2, NULL, 1, '4.00', '40000.00', 'pending', '2026-07-08', NULL, '2026-07-08 00:59:41', '2026-07-08 00:59:41'),
+(38, 'EXP260709053503', 1, 1, 1, 2, NULL, 1, '1.00', '10000.00', 'pending', '2026-07-09', NULL, '2026-07-08 22:35:03', '2026-07-08 22:35:03'),
+(39, 'EXP260714145253', 1, 2, 1, 2, NULL, 1, '1.00', '10000.00', 'pending', '2026-07-14', NULL, '2026-07-14 07:52:53', '2026-07-14 07:52:53');
 
 -- --------------------------------------------------------
 
@@ -218,7 +254,9 @@ INSERT INTO `shipment_items` (`id`, `shipment_id`, `item_name`, `quantity`, `wei
 (33, 34, 'Ucup', 2, '1.00', NULL, '2026-07-07 17:56:24', '2026-07-07 17:56:24'),
 (34, 35, 'Ucup', 3, '1.00', NULL, '2026-07-07 17:57:42', '2026-07-07 17:57:42'),
 (35, 36, 'Nur', 4, '1.00', NULL, '2026-07-07 18:15:29', '2026-07-07 18:15:29'),
-(36, 37, 'Sepatu', 4, '1.00', NULL, '2026-07-08 00:59:41', '2026-07-08 00:59:41');
+(36, 37, 'Sepatu', 4, '1.00', NULL, '2026-07-08 00:59:41', '2026-07-08 00:59:41'),
+(37, 38, 'Iqbal', 1, '1.00', '1783550103039-0.webp', '2026-07-08 22:35:03', '2026-07-08 22:35:03'),
+(38, 39, 'Sepatu', 1, '1.00', '1784015573244-0.png', '2026-07-14 07:52:53', '2026-07-14 07:52:53');
 
 -- --------------------------------------------------------
 
@@ -243,7 +281,10 @@ CREATE TABLE `shipment_trackings` (
 
 INSERT INTO `shipment_trackings` (`id`, `shipment_id`, `location`, `description`, `status`, `tracked_at`, `created_at`, `updated_at`) VALUES
 (5, 35, 'Cabang', 'Kurir telah ditugaskan oleh admin.', 'picked_up', '2026-07-07 18:11:57', '2026-07-07 18:11:57', '2026-07-07 18:11:57'),
-(6, 35, 'Cirebon', 'PP', 'in_transit', '2026-07-07 18:13:28', '2026-07-07 18:13:28', '2026-07-07 18:13:28');
+(6, 35, 'Cirebon', 'PP', 'in_transit', '2026-07-07 18:13:28', '2026-07-07 18:13:28', '2026-07-07 18:13:28'),
+(7, 35, 'Bekasi', 'p', 'arrived_at_branch', '2026-07-08 23:15:42', '2026-07-08 23:15:42', '2026-07-08 23:15:42'),
+(8, 35, 'Bekasi', 'pp', 'out_for_delivery', '2026-07-09 07:20:59', '2026-07-09 07:20:59', '2026-07-09 07:20:59'),
+(9, 35, 'Alamat tujuan', 'sampai', 'delivered', '2026-07-09 07:22:46', '2026-07-09 07:22:46', '2026-07-09 07:22:46');
 
 -- --------------------------------------------------------
 
@@ -258,7 +299,7 @@ CREATE TABLE `users` (
   `phone` varchar(20) DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('admin','cashier','courier','manager') NOT NULL,
+  `role` enum('admin','cashier','courier','manager','admin-pusat') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `branch_id` bigint UNSIGNED DEFAULT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -270,11 +311,15 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `phone`, `email_verified_at`, `password`, `role`, `branch_id`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Administrator', 'admin@ekspedisi.com', NULL, NULL, '$2b$10$GuUVx2nLUqcAxN.h9pD1wehGnYtVZlkM9sP2IcPLHle91BzYViGuS', 'manager', NULL, NULL, '2026-07-02 15:06:21', '2026-07-02 15:06:21'),
+(1, 'Administrator', 'admin@ekspedisi.com', NULL, NULL, '$2b$10$GuUVx2nLUqcAxN.h9pD1wehGnYtVZlkM9sP2IcPLHle91BzYViGuS', 'admin-pusat', NULL, NULL, '2026-07-02 15:06:21', '2026-07-02 15:06:21'),
 (2, 'Cirebon-hub', 'yusufftibazma@gmail.com', NULL, NULL, '$2b$10$dtRScFg7oYi8XahFIHOr6ely2IuCMteL/gQ8oZiLxM8oOO3.E5wDW', 'admin', 1, NULL, '2026-07-02 15:17:53', '2026-07-02 15:17:53'),
 (3, 'Bekasi-Hub-Cab1', 'bekasi@ekspedisi.com', NULL, NULL, '$2b$10$Yt0jnXW.2RGGdczbBc4i9urzBj5vqIyfaCMts8/Wg0zrIJDLPuVxO', 'admin', 2, NULL, '2026-07-02 23:23:50', '2026-07-02 23:23:50'),
 (4, 'Bandung-hub', 'bandung@ekspedisi.com', NULL, NULL, '$2b$10$80dxHXLaZQlWGQ.MzMSExuf655uasEoJXlWRS4gdBWxRB99gHrnPG', 'admin', 3, NULL, '2026-07-03 09:14:11', '2026-07-03 09:14:11'),
-(5, 'Nur Yusuf Ferdiansyah', 'yusuff@gmail.com', NULL, NULL, '$2b$10$7lXoStg7r2MLiYrnkLcYS.TDq9mqGbynkfwNHcFts2PaCpTa6k2OW', 'courier', 2, NULL, '2026-07-04 08:12:43', '2026-07-04 08:12:43');
+(5, 'Nur Yusuf Ferdiansyah', 'yusuff@gmail.com', NULL, NULL, '$2b$10$7lXoStg7r2MLiYrnkLcYS.TDq9mqGbynkfwNHcFts2PaCpTa6k2OW', 'courier', 2, NULL, '2026-07-04 08:12:43', '2026-07-04 08:12:43'),
+(6, 'Ristina Eka', 'ristinaesb@gmail.com', '083833944847', NULL, '$2b$10$FLO5zgbJovZWhEko8kdFW.VPPtSSxJpk/DN7yzlYjpNgdWBd4OOG.', 'courier', 2, NULL, '2026-07-10 02:30:32', '2026-07-10 02:30:32'),
+(7, 'Sayyid', 'sayid@gmail.com', '083833944846', NULL, '$2b$10$Yt0jnXW.2RGGdczbBc4i9urzBj5vqIyfaCMts8/Wg0zrIJDLPuVxO', 'cashier', NULL, NULL, NULL, NULL),
+(8, 'Jakarta', 'jakarta@ekspedisi.com', NULL, NULL, '$2b$10$urckOzoOXgskHlNqN8GP8OOOUl30nk2znuiOrzpi14h8KA8SS1YrS', 'admin', 4, NULL, '2026-07-15 02:22:36', '2026-07-15 02:22:36'),
+(9, 'manager', 'manager@ekspedisi.com', '083833944842', NULL, '$2b$10$GuUVx2nLUqcAxN.h9pD1wehGnYtVZlkM9sP2IcPLHle91BzYViGuS', 'manager', NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -315,6 +360,12 @@ ALTER TABLE `courier_applications`
 ALTER TABLE `customers`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indeks untuk tabel `customer_verifications`
+--
+ALTER TABLE `customer_verifications`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indeks untuk tabel `payments`
@@ -379,7 +430,7 @@ ALTER TABLE `vehicles`
 -- AUTO_INCREMENT untuk tabel `branches`
 --
 ALTER TABLE `branches`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT untuk tabel `courier_applications`
@@ -391,43 +442,49 @@ ALTER TABLE `courier_applications`
 -- AUTO_INCREMENT untuk tabel `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT untuk tabel `customer_verifications`
+--
+ALTER TABLE `customer_verifications`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT untuk tabel `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT untuk tabel `rates`
 --
 ALTER TABLE `rates`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT untuk tabel `shipments`
 --
 ALTER TABLE `shipments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT untuk tabel `shipment_items`
 --
 ALTER TABLE `shipment_items`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT untuk tabel `shipment_trackings`
 --
 ALTER TABLE `shipment_trackings`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT untuk tabel `vehicles`
