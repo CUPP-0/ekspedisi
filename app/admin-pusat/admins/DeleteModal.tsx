@@ -1,13 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import {
-  X,
-  Trash2,
-  AlertTriangle,
-  User,
-  Shield,
-} from "lucide-react";
+import { useState } from 'react';
+import { X, Trash2, AlertTriangle, User, Shield } from 'lucide-react';
 
 interface Admin {
   id: number;
@@ -21,22 +15,17 @@ interface Props {
   onSuccess: () => void;
 }
 
-export default function DeleteModal({
-  open,
-  admin,
-  onClose,
-  onSuccess,
-}: Props) {
+export default function DeleteModal({ open, admin, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
 
   if (!open || !admin) return null;
 
   async function handleDelete() {
-    setLoading(true);
+    if (!admin) return;
 
     try {
       const res = await fetch(`/api/admins/${admin.id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
 
       const data = await res.json();
@@ -46,13 +35,13 @@ export default function DeleteModal({
         return;
       }
 
-      alert("Admin berhasil dihapus");
+      alert('Admin berhasil dihapus');
 
       onSuccess();
       onClose();
     } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan saat menghapus admin");
+      console.log(err);
+      alert('Terjadi kesalahan');
     } finally {
       setLoading(false);
     }
@@ -72,11 +61,7 @@ export default function DeleteModal({
               <p className="text-xs text-gray-500">Tindakan ini tidak dapat dibatalkan</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            disabled={loading}
-            className="p-2 rounded-lg hover:bg-white/50 transition-colors disabled:opacity-50"
-          >
+          <button onClick={onClose} disabled={loading} className="p-2 rounded-lg hover:bg-white/50 transition-colors disabled:opacity-50">
             <X size={20} className="text-gray-500" />
           </button>
         </div>
@@ -90,9 +75,7 @@ export default function DeleteModal({
             </div>
             <div>
               <p className="text-sm font-semibold text-red-900 mb-0.5">Peringatan</p>
-              <p className="text-xs text-red-700">
-                Menghapus admin akan mencabut semua aksesnya ke sistem. Admin yang dihapus tidak dapat dipulihkan.
-              </p>
+              <p className="text-xs text-red-700">Menghapus admin akan mencabut semua aksesnya ke sistem. Admin yang dihapus tidak dapat dipulihkan.</p>
             </div>
           </div>
 
@@ -100,9 +83,7 @@ export default function DeleteModal({
           <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
             <p className="text-xs text-gray-500 mb-3">Admin yang akan dihapus:</p>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-900 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                {admin.name.charAt(0).toUpperCase()}
-              </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-900 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">{admin.name.charAt(0).toUpperCase()}</div>
               <div>
                 <p className="font-semibold text-gray-900">{admin.name}</p>
                 <p className="text-xs text-gray-500">ID: #{admin.id}</p>
@@ -119,11 +100,7 @@ export default function DeleteModal({
 
           {/* Action Buttons */}
           <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
-            <button
-              onClick={onClose}
-              disabled={loading}
-              className="px-5 py-2.5 rounded-xl border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 font-semibold text-gray-700 hover:text-red-600 transition-all disabled:opacity-50"
-            >
+            <button onClick={onClose} disabled={loading} className="px-5 py-2.5 rounded-xl border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 font-semibold text-gray-700 hover:text-red-600 transition-all disabled:opacity-50">
               Batal
             </button>
             <button
