@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import db from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import path from "path";
 import fs from "fs/promises";
 
@@ -45,7 +46,8 @@ export async function POST(req: NextRequest) {
     // ==========================
     const formData = await req.formData();
 
-    const receiver_id = Number(formData.get("receiver_id"));
+    let receiver_id = Number(formData.get("receiver_id"));
+    const receiver_name = String(formData.get("receiver_name") || "").trim();
     const origin_branch_id = Number(formData.get("origin_branch_id"));
     const destination_branch_id = Number(
       formData.get("destination_branch_id")
@@ -59,6 +61,50 @@ export async function POST(req: NextRequest) {
     const trackingNumber = generateTrackingNumber();
 
     await conn.beginTransaction();
+
+    if (!receiver_id || receiver_id === 0) {
+      if (!receiver_name) {
+        await conn.rollback();
+        return NextResponse.json(
+          { message: 'Nama penerima wajib diisi.' },
+          { status: 400 }
+        );
+      }
+
+      const [existingReceiver]: any = await conn.query(
+        `
+        SELECT id
+        FROM customers
+        WHERE name = ?
+        LIMIT 1
+        `,
+        [receiver_name]
+      );
+
+      if (existingReceiver.length) {
+        receiver_id = existingReceiver[0].id;
+      } else {
+        const passwordHash = await bcrypt.hash('Penerima123!', 10);
+
+        const [insertedReceiver]: any = await conn.query(
+          `
+          INSERT INTO customers (
+            name,
+            email,
+            password,
+            created_at,
+            updated_at
+          )
+          VALUES (
+            ?, '', ?, NOW(), NOW()
+          )
+          `,
+          [receiver_name, passwordHash]
+        );
+
+        receiver_id = insertedReceiver.insertId;
+      }
+    }
 
     // ==========================
     // Insert Shipment

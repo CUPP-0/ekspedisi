@@ -38,6 +38,7 @@ export default function CreateShipmentPage() {
 
   const [form, setForm] = useState({
     receiver_id: '',
+    receiver_name: '',
     origin_branch_id: '',
     destination_branch_id: '',
     rate_id: '',
@@ -82,11 +83,11 @@ export default function CreateShipmentPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [b, c, r] = await Promise.all([fetch('/api/branches/list').then((r) => r.json()), fetch('/api/customers/list').then((r) => r.json()), fetch('/api/rates/list').then((r) => r.json())]);
-
-      console.log('Branches', b);
-      console.log('Customers', c);
-      console.log('Rates', r);
+      const [b, c, r] = await Promise.all([
+        fetch('/api/branches/list').then((r) => r.json()),
+        fetch('/api/customers/list').then((r) => r.json()),
+        fetch('/api/rates/list').then((r) => r.json()),
+      ]);
 
       setBranches(Array.isArray(b) ? b : []);
       setCustomers(Array.isArray(c) ? c : []);
@@ -152,6 +153,7 @@ export default function CreateShipmentPage() {
       const formData = new FormData();
 
       formData.append('receiver_id', String(form.receiver_id));
+      formData.append('receiver_name', form.receiver_name || '');
       formData.append('origin_branch_id', String(form.origin_branch_id));
       formData.append('destination_branch_id', String(form.destination_branch_id));
       formData.append('rate_id', String(rate.id));
@@ -371,24 +373,28 @@ export default function CreateShipmentPage() {
                     <User size={16} className="text-red-600" />
                     Penerima <span className="text-red-500">*</span>
                   </label>
-                  <select
+                  <input
+                    list="receiver-options"
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all"
-                    value={form.receiver_id}
-                    onChange={(e) =>
+                    value={form.receiver_name}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const matched = customers.find((c) => c.name === value);
+
                       setForm({
                         ...form,
-                        receiver_id: e.target.value,
-                      })
-                    }
+                        receiver_name: value,
+                        receiver_id: matched ? String(matched.id) : '',
+                      });
+                    }}
+                    placeholder="Masukkan nama penerima atau pilih dari daftar"
                     required
-                  >
-                    <option value="">Pilih Penerima</option>
+                  />
+                  <datalist id="receiver-options">
                     {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
+                      <option key={c.id} value={c.name} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
 
                 {/* Cabang Asal & Tujuan */}
