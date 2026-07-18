@@ -226,12 +226,23 @@ export async function POST(req: NextRequest) {
           updated_at=NOW()
         WHERE id=?
         `,
-        [
-          nextStatus,
-          photoName,
-          shipment_id,
-        ]
+        [nextStatus, photoName, shipment_id]
       );
+
+    } else if (nextStatus === "in_transit") {
+      // Clear assigned courier when shipment becomes in_transit
+      await conn.query(
+        `
+        UPDATE shipments
+        SET
+          status=?,
+          courier_id=NULL,
+          updated_at=NOW()
+        WHERE id=?
+        `,
+        [nextStatus, shipment_id]
+      );
+
     } else {
       await conn.query(
         `
@@ -241,10 +252,7 @@ export async function POST(req: NextRequest) {
           updated_at=NOW()
         WHERE id=?
         `,
-        [
-          nextStatus,
-          shipment_id,
-        ]
+        [nextStatus, shipment_id]
       );
     }
 

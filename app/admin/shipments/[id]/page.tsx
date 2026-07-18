@@ -86,6 +86,7 @@ export default function DetailShipmentPage() {
     setOpenTracking(true);
   }
 
+
   useEffect(() => {
     loadShipment();
   }, []);
@@ -141,6 +142,27 @@ export default function DetailShipmentPage() {
   const currentPayment = paymentConfig[shipment?.payment_status || "pending"] || paymentConfig.pending;
   const StatusIcon = currentStatus.icon;
   const PaymentIcon = currentPayment.icon;
+
+  // Determine which status options should be selectable
+  const highestStep = currentStatus.step;
+  function isStatusDisabled(optionStatus: string) {
+    // Admin is not allowed to set 'assigned' or 'picked_up' via tracking modal
+    if (optionStatus === "assigned" || optionStatus === "picked_up") {
+      if (editingTracking && optionStatus === editingTracking.status) return false;
+      return true;
+    }
+    const optionStep = statusConfig[optionStatus]?.step ?? 0;
+
+    // When editing, allow keeping the existing status even if it's behind
+    if (editingTracking) {
+      if (optionStatus === editingTracking.status) return false;
+      // Do not allow selecting a previous step lower than the shipment's current highest step
+      return optionStep < highestStep;
+    }
+
+    // When adding new tracking, only allow the immediate next step
+    return optionStep !== highestStep + 1;
+  }
 
   // Tracking steps
   const trackingSteps = [
@@ -796,12 +818,11 @@ export default function DetailShipmentPage() {
                   onChange={(e) => setTrackingForm({ ...trackingForm, status: e.target.value })}
                 >
                   <option value="">Pilih Status</option>
-                  <option value="assigned">Assigned</option>
-                  <option value="picked_up">Picked Up</option>
-                  <option value="in_transit">In Transit</option>
-                  <option value="arrived_at_branch">Arrived At Branch</option>
-                  <option value="out_for_delivery">Out For Delivery</option>
-                  <option value="delivered">Delivered</option>
+                  {trackingSteps.map((step) => (
+                    <option key={step.status} value={step.status} disabled={isStatusDisabled(step.status)}>
+                      {step.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 

@@ -208,7 +208,7 @@ CREATE TABLE `shipments` (
   `rate_id` bigint UNSIGNED DEFAULT NULL,
   `total_weight` decimal(10,2) NOT NULL,
   `total_price` decimal(15,2) NOT NULL,
-  `status` enum('pending','picked_up','in_transit','arrived_at_branch','out_for_delivery','delivered','cancelled') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','assigned','picked_up','in_transit','arrived_at_branch','out_for_delivery','delivered','cancelled') NOT NULL DEFAULT 'pending',
   `shipment_date` date NOT NULL,
   `photo` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,

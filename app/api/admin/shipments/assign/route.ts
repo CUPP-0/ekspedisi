@@ -58,18 +58,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fetch current shipment to determine appropriate target status
+    const [existingShipments]: any = await conn.query(
+      `
+      SELECT id, status
+      FROM shipments
+      WHERE id=?
+      LIMIT 1
+      `,
+      [shipment_id]
+    );
+
+    if (!existingShipments.length) {
+      return NextResponse.json({ message: 'Shipment tidak ditemukan.' }, { status: 404 });
+    }
+
+    const currentStatus = existingShipments[0].status;
+
+    // If shipment is already in a delivery flow (in_transit/arrived_at_branch/out_for_delivery),
+    // assigning a courier should result in 'out_for_delivery' (not revert back to 'assigned').
+    const deliveryStatuses = ['in_transit', 'arrived_at_branch', 'out_for_delivery'];
+    const targetStatus = deliveryStatuses.includes(currentStatus) ? 'out_for_delivery' : 'assigned';
+
     await conn.beginTransaction();
 
+    // Update shipment with courier and appropriate status
     await conn.query(
       `
       UPDATE shipments
-  SET
-      courier_id=?,
-      status='picked_up',
-      updated_at=NOW()
-  WHERE id=?
+      SET
+        courier_id=?,
+        status=?,
+        updated_at=NOW()
+      WHERE id=?
       `,
-      [courier_id, shipment_id],
+      [courier_id, targetStatus, shipment_id]
     );
 
     await conn.query(
@@ -95,7 +118,7 @@ export async function POST(req: NextRequest) {
         NOW()
       )
       `,
-      [shipment_id, 'Cabang', 'Kurir telah ditugaskan oleh admin.', 'picked_up'],
+      [shipment_id, 'Cabang', 'Kurir telah ditugaskan oleh admin.', targetStatus]
     );
 
     await conn.commit();

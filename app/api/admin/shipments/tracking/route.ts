@@ -41,6 +41,12 @@ export async function POST(req: NextRequest) {
       description,
     } = await req.json();
 
+    // Admin should not be able to set certain statuses here
+    const forbiddenForAdmin = ["assigned", "picked_up", "delivered"];
+    if (forbiddenForAdmin.includes(status)) {
+      return NextResponse.json({ message: "Status tidak diperbolehkan melalui endpoint ini." }, { status: 400 });
+    }
+
     // ===========================
     // Validasi shipment
     // ===========================
@@ -179,31 +185,60 @@ export async function POST(req: NextRequest) {
         NOW()
       )
       `,
-      [
-        shipment_id,
-        location,
-        description,
-        status,
-      ]
+      [shipment_id, location, description, status]
     );
 
     // ===========================
     // Update status shipment
     // ===========================
 
-    await conn.query(
-      `
-      UPDATE shipments
-      SET
-        status=?,
-        updated_at=NOW()
-      WHERE id=?
-      `,
-      [
-        status,
-        shipment_id,
-      ]
-    );
+    // Ensure we only write values supported by the shipments.status enum in DB.
+    const allowedShipmentStatuses = [
+      "pending",
+      "assigned",
+      "picked_up",
+      "in_transit",
+      "arrived_at_branch",
+      "out_for_delivery",
+      "delivered",
+      "cancelled",
+    ];
+
+    const statusToUpdate = allowedShipmentStatuses.includes(status)
+      ? status
+      : shipments[0].status;
+
+    // If switching to in_transit, clear assigned courier (per new rules)
+    if (statusToUpdate === "in_transit") {
+      await conn.query(
+        `
+        UPDATE shipments
+        SET
+          status=?,
+          courier_id=NULL,
+          updated_at=NOW()
+        WHERE id=?
+        `,
+        [statusToUpdate, shipment_id]
+      );
+
+    } else {
+      // If switching to out_for_delivery, ensure a courier is assigned
+      if (statusToUpdate === "out_for_delivery" && !shipments[0].courier_id) {
+        return NextResponse.json({ message: "Assign kurir terlebih dahulu sebelum mengubah ke status pengantaran." }, { status: 400 });
+      }
+
+      await conn.query(
+        `
+        UPDATE shipments
+        SET
+          status=?,
+          updated_at=NOW()
+        WHERE id=?
+        `,
+        [statusToUpdate, shipment_id]
+      );
+    }
 
     await conn.commit();
 
