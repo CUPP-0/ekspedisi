@@ -98,7 +98,7 @@ export default function ShipmentDetailPage() {
 
   // Status config
   const statusConfig: Record<string, { bg: string; text: string; icon: any; label: string; step: number }> = {
-    pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock, label: 'Menunggu Pembayaran', step: 0 },
+    pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock, label: 'Menunggu', step: 0 },
     unpaid: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock, label: 'Belum Dibayar', step: 0 },
     assigned: { bg: 'bg-blue-100', text: 'text-blue-700', icon: User, label: 'Kurir Ditugaskan', step: 1 },
     picked_up: { bg: 'bg-indigo-100', text: 'text-indigo-700', icon: Package, label: 'Paket Diambil', step: 2 },
@@ -257,7 +257,7 @@ export default function ShipmentDetailPage() {
 
           {/* Logout */}
           <div className="p-4 border-t border-gray-100">
-            <button onClick={() => router.push('/logout')} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all">
+            <button onClick={() => router.push('/login/customer')} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all">
               <LogOut size={20} />
               <span className="text-sm">Logout</span>
             </button>

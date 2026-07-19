@@ -164,7 +164,7 @@ export default function CustomerProfilePage() {
 
           {/* Logout */}
           <div className="p-4 border-t border-gray-100">
-            <button onClick={() => router.push('/logout')} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all">
+            <button onClick={() => router.push('/login/customer')} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all">
               <LogOut size={20} />
               <span className="text-sm">Logout</span>
             </button>
